@@ -75,6 +75,18 @@ tags:
     (target_root / 'index.md').write_text(note, encoding='utf-8')
 
 
+def update_vault_index(vault_root: Path, subdir: str, entry_name: str, title: str, host: str, date_str: str):
+    main_index = vault_root / subdir / 'index.md'
+    main_index.parent.mkdir(parents=True, exist_ok=True)
+    existing = main_index.read_text(encoding='utf-8') if main_index.exists() else '# Local Video Analysis\n\n## Recent analyses\n\n'
+    line = f'- {date_str} · [[{entry_name}/index|{title}]] · `{host}`\n'
+    if line not in existing:
+        if '## Recent analyses\n\n' not in existing:
+            existing = existing.rstrip() + '\n\n## Recent analyses\n\n'
+        existing += line
+    main_index.write_text(existing, encoding='utf-8')
+
+
 def main():
     p = argparse.ArgumentParser()
     p.add_argument('--run-dir', required=True)
@@ -84,7 +96,8 @@ def main():
 
     run_dir = Path(args.run_dir).expanduser().resolve()
     vault_dir = Path(args.vault_dir).expanduser().resolve()
-    target_root = vault_dir / args.subdir / slugify(run_dir.name)
+    entry_name = slugify(run_dir.name)
+    target_root = vault_dir / args.subdir / entry_name
     target_root.mkdir(parents=True, exist_ok=True)
 
     source = load_json(run_dir / 'source_result.json')
@@ -119,6 +132,12 @@ def main():
 
     write_main_note(target_root, run_dir, source, probe)
     copied.append(str(target_root / 'index.md'))
+
+    title = source.get('source_title') or source.get('suggested_run_name') or run_dir.name
+    host = source.get('source_host') or 'unknown'
+    date_str = datetime.now().strftime('%Y-%m-%d')
+    update_vault_index(vault_dir, args.subdir, entry_name, title, host, date_str)
+    copied.append(str(vault_dir / args.subdir / 'index.md'))
     print('\n'.join(copied))
 
 

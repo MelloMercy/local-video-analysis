@@ -45,7 +45,7 @@ python3 scripts/export_to_obsidian.py --run-dir ./runs/<video-run> --vault-dir /
 - `runs/<video>/precise/suspicious_segments.md`
 - `runs/<video>/frames/`
 
-## 4. 推荐工作流
+## 7. 推荐工作流
 
 先看高精度逐字稿，再结合抽帧做总结。
 
