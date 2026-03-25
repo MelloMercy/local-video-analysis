@@ -13,7 +13,6 @@ TERM_FIXES = [
     ('相机游戏', '象棋游戏'), ('麦克朗S', 'macOS'),
 ]
 RUN_HOME = '阅读首页.md'
-VAULT_HOME = '首页.md'
 EXPORTED_FILES = {
     'report.final.md': '01 视频分析报告.md',
     'precise/precise_transcript.clean.md': '02 高精度逐字稿.md',
@@ -220,48 +219,12 @@ tags:
 '''
     (target_root / RUN_HOME).write_text(note, encoding='utf-8')
 
-def load_index_entries(index_path: Path):
-    p = index_path.with_suffix('.entries.json')
-    return load_json(p) if p.exists() else []
-
-def render_entry_block(e):
-    return [f"### [[{e['entry_name']}/{RUN_HOME[:-3]}|{e['title_short']}]]", '', f"- `{e['host']}` · `{e['duration']}` · `{e['date']}`", e['overall'], '', '#### 场景覆盖', *[f'- {x}' for x in e['scenarios']], '']
-
-def render_group_section(title, grouped):
-    lines = [f'## {title}', '']
-    for key in sorted(grouped.keys()):
-        lines += [f'### {key}', '']
-        for e in grouped[key]:
-            lines += [f"- [[{e['entry_name']}/{RUN_HOME[:-3]}|{e['title_short']}]] · `{e['date']}` · `{e['duration']}`"]
-        lines += ['']
-    return lines
-
-def render_vault_home(entries):
-    lines = ['# Local Video Analysis', '', '## 入口', '', '- 看新导入的视频：优先打开它的 `阅读首页`。', '- 想快速浏览历史结果：再看下面列表。', '', '## 最近分析', '']
-    if not entries:
-        lines += ['- 暂无分析结果。', '']
-    else:
-        for e in entries:
-            lines += render_entry_block(e)
-    by_host = {}
-    for e in entries:
-        by_host.setdefault(e.get('host') or 'unknown', []).append(e)
-    if len(by_host) > 1:
-        lines += render_group_section('按来源网站看', by_host)
-    return '\n'.join(lines) + '\n'
-
-def update_vault_home(vault_root: Path, subdir: str, entry: dict):
-    main_home = vault_root / subdir / VAULT_HOME
-    main_home.parent.mkdir(parents=True, exist_ok=True)
-    entries = [e for e in load_index_entries(main_home) if e.get('entry_name') != entry['entry_name']]
-    entries.insert(0, entry)
-    entries.sort(key=lambda x: (x.get('date', ''), x.get('entry_name', '')), reverse=True)
-    entries = entries[:100]
-    main_home.write_text(render_vault_home(entries), encoding='utf-8')
-    save_json(main_home.with_suffix('.entries.json'), entries)
-    legacy_index = main_home.parent / 'index.md'
-    if legacy_index.exists():
-        legacy_index.unlink()
+def remove_vault_home(vault_root: Path, subdir: str):
+    parent = vault_root / subdir
+    for name in ('首页.md', '首页.entries.json', 'index.md', 'index.entries.json'):
+        path = parent / name
+        if path.exists():
+            path.unlink()
 
 def clean_target_root(target_root: Path):
     keep = set(EXPORTED_FILES.values()) | {RUN_HOME, 'frames', '.obsidian'}
@@ -300,22 +263,7 @@ def main():
         copied.append(str(dest_frames))
     write_run_home(target_root, run_dir, source, probe)
     copied.append(str(target_root / RUN_HOME))
-    report = read_text(run_dir / 'report.final.md')
-    overall = extract_section(report, '## 总体结论', ['## 核心观点']) or '待补充'
-    scenarios_text = extract_section(report, '## 实战场景拆解', ['## 对比判断'])
-    scenarios = []
-    for line in scenarios_text.splitlines():
-        line = re.sub(r'^\d+\.\s*', '', line).strip()
-        if line:
-            scenarios.append(line)
-    title = source.get('source_title') or source.get('suggested_run_name') or run_dir.name
-    title_short = normalize_text(title)
-    if len(title_short) > 28:
-        title_short = title_short[:28].rstrip() + '…'
-    entry = {'entry_name': entry_name, 'title': title, 'title_short': title_short, 'host': source.get('source_host', 'unknown'), 'kind': source.get('kind', 'unknown'), 'duration': human_duration(duration), 'run_name': source.get('suggested_run_name', run_dir.name), 'date': datetime.now().strftime('%Y-%m-%d'), 'overall': overall, 'scenarios': scenarios[:4]}
-    update_vault_home(vault_dir, args.subdir, entry)
-    copied.append(str(vault_dir / args.subdir / VAULT_HOME))
-    copied.append(str((vault_dir / args.subdir / VAULT_HOME).with_suffix('.entries.json')))
+    remove_vault_home(vault_dir, args.subdir)
     for path in copied:
         print(path)
 
