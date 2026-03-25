@@ -35,7 +35,16 @@ runs/<video-name>/
 
 ## 推荐阅读顺序
 
-1. `precise_transcript.clean.md`
-2. `precise_transcript.timeline.md`
-3. `suspicious_segments.md`
-4. 结合 `frames/` 做最终总结
+1. `report.final.md`
+2. `precise_transcript.clean.md`
+3. `precise_transcript.timeline.md`
+4. `suspicious_segments.md`
+5. 结合 `frames/` 做最终总结
+
+## Obsidian 导出后
+
+如果你把结果导出到 Obsidian，优先从这里进入：
+
+1. `Local Video Analysis/index.md`
+2. `Local Video Analysis/<run>/index.md`
+��最终总结
