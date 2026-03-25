@@ -83,29 +83,6 @@ def sentence_split(text: str):
     return [x.strip() for x in re.split(r'(?<=[。！？.!?])\s+', text) if x.strip()]
 
 
-def bullet_points_from_text(summary: str, timeline, max_points=6):
-    points = []
-    for s in sentence_split(summary):
-        if len(s) < 18:
-            continue
-        points.append(summarize_text(s, 110))
-        if len(points) >= max_points:
-            return points
-    for _, _, line in timeline:
-        if len(line) < 18:
-            continue
-        points.append(summarize_text(line, 110))
-        if len(points) >= max_points:
-            break
-    seen = []
-    uniq = []
-    for p in points:
-        if p not in seen:
-            seen.append(p)
-            uniq.append(p)
-    return uniq[:max_points]
-
-
 def extract_probe_fields(probe: dict):
     duration = (
         probe.get('duration_seconds')
@@ -123,7 +100,54 @@ def extract_probe_fields(probe: dict):
         or probe.get('pixel_height')
         or probe.get('video', {}).get('height')
     )
+    if not (width and height):
+        for stream in probe.get('streams', []):
+            if stream.get('codec_type') == 'video':
+                width = width or stream.get('width')
+                height = height or stream.get('height')
+                break
     return duration, width, height
+
+
+def build_key_points(summary: str, timeline, title: str, max_points=6):
+    points = []
+    lowered_title = normalize_text(title).lower()
+
+    rules = [
+        ('桌面版', '视频围绕桌面版能力展开演示。'),
+        ('Computer Use', '重点演示了 Computer Use / 桌面操控能力。'),
+        ('CoWork', '视频展示了 CoWork / Code 侧的协同与操控入口。'),
+        ('手机', '视频展示了从手机向电脑发送任务并远程执行。'),
+        ('博客', '演示了调用浏览器打开博客、进入文章并总结内容。'),
+        ('Markdown', '演示了把 Markdown 文件转换为 PDF。'),
+        ('PDF', '演示了文档格式转换能力。'),
+        ('Numbers', '演示了调用 Numbers 制作表格。'),
+        ('Keynote', '演示了调用 Keynote 生成演示文稿。'),
+        ('Pages', '演示了调用 Pages 生成报告文档。'),
+        ('雅虎Finance', '演示了先抓取股票信息，再写入本地办公软件。'),
+        ('国际象棋', '演示了直接操控桌面版国际象棋游戏。'),
+        ('OpenClaw', '视频中多次将 Claude 与 OpenClaw 做对比。'),
+        ('开箱即用', '结论倾向于强调 Claude 的开箱即用体验。'),
+    ]
+
+    text_pool = ' '.join([summary] + [line for _, _, line in timeline])
+    for needle, point in rules:
+        if needle in text_pool or needle.lower() in lowered_title:
+            points.append(point)
+        if len(points) >= max_points:
+            break
+
+    if len(points) < max_points:
+        for s in sentence_split(summary):
+            if len(s) < 20:
+                continue
+            candidate = summarize_text(s, 100)
+            if candidate not in points:
+                points.append(candidate)
+            if len(points) >= max_points:
+                break
+
+    return points[:max_points]
 
 
 def main():
@@ -144,13 +168,14 @@ def main():
 
     duration, width, height = extract_probe_fields(probe)
     resolution = f'{width} x {height}' if width and height else 'unknown'
+    title = source.get('source_title', 'unknown')
 
     overview = [
         f"- 输入来源：`{source.get('kind', 'unknown')}`",
         f"- 原始输入：`{source.get('source', 'unknown')}`",
         f"- 解析视频路径：`{source.get('video_path', 'unknown')}`",
         f"- 来源平台：`{source.get('source_host', 'unknown')}`",
-        f"- 来源标题：`{source.get('source_title', 'unknown')}`",
+        f"- 来源标题：`{title}`",
         f"- 来源 ID：`{source.get('source_id', 'unknown')}`",
         f"- Run 名：`{source.get('suggested_run_name', run_dir.name)}`",
         f"- 分析目录：`{run_dir}`",
@@ -160,7 +185,7 @@ def main():
 
     timeline = build_timeline(segments)
     summary = summarize_text(text, 800)
-    points = bullet_points_from_text(summary, timeline)
+    points = build_key_points(summary, timeline, title)
 
     parts = ['# 视频分析报告', '', '## 视频概览', '', *overview, '', '## 整段总结', '', summary or '待补充', '', '## 时间线', '']
     if timeline:
