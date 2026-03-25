@@ -116,6 +116,19 @@ local-video-analysis/
 
 ---
 
+## Docs map
+
+- `docs/install.md` — 安装依赖与环境检查
+- `docs/quickstart.md` — 最快跑通主流程
+- `docs/workflow.md` — 处理链路说明
+- `docs/url-inputs.md` — URL 输入与 cookies 用法
+- `docs/obsidian-integration.md` — 导出到 Obsidian 的知识工作流
+- `docs/roadmap.md` — 后续能力规划
+- `docs/report-template.md` — 报告头部元信息模板
+- `examples/outputs.md` — 输出结构示例
+
+---
+
 ## Install
 
 See:
