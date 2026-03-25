@@ -141,10 +141,16 @@ python3 scripts/check_env.py
 See:
 - `docs/quickstart.md`
 
-Run the full workflow:
+Run the full workflow with a local file:
 
 ```bash
-bash scripts/analyze_local_video.sh /path/to/video.mp4 30
+bash scripts/analyze_video.sh /path/to/video.mp4 30
+```
+
+Run the full workflow with a video URL:
+
+```bash
+bash scripts/analyze_video.sh "https://example.com/video-page" 30
 ```
 
 Run the precise transcript pipeline only:

@@ -6,10 +6,16 @@
 python3 scripts/check_env.py
 ```
 
-## 2. 跑完整流程
+## 2. 跑完整流程（本地文件）
 
 ```bash
-bash scripts/analyze_local_video.sh /path/to/video.mp4 30
+bash scripts/analyze_video.sh /path/to/video.mp4 30
+```
+
+## 3. 跑完整流程（视频 URL）
+
+```bash
+bash scripts/analyze_video.sh "https://example.com/video-page" 30
 ```
 
 ## 3. 优先查看这些文件
