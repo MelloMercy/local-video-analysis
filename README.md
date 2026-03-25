@@ -186,7 +186,7 @@ Typical outputs include:
 - `report.final.md`
 - `frames/`
 - Obsidian-ready `index.md` (after export)
-- Vault-level `Local Video Analysis/index.md` overview page (after export)
+- Vault-level `Local Video Analysis/index.md` overview page with recent analyses, metadata, and short summaries (after export)
 - `audio.m4a`
 - `transcript.json`
 - `transcript.clean.md`

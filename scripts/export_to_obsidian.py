@@ -17,6 +17,41 @@ def load_json(path: Path):
     return json.loads(path.read_text(encoding='utf-8'))
 
 
+def summarize_text(text: str, limit=140):
+    text = ' '.join((text or '').split())
+    if len(text) <= limit:
+        return text or '待补充'
+    return text[:limit].rstrip() + '…'
+
+
+def human_duration(seconds):
+    try:
+        x = int(float(seconds))
+    except Exception:
+        return 'unknown'
+    h = x // 3600
+    m = (x % 3600) // 60
+    s = x % 60
+    if h:
+        return f'{h}h {m}m {s}s'
+    return f'{m}m {s}s'
+
+
+def extract_summary(run_dir: Path):
+    final_report = run_dir / 'report.final.md'
+    if final_report.exists():
+        text = final_report.read_text(encoding='utf-8')
+        marker = '## 整段总结'
+        if marker in text:
+            chunk = text.split(marker, 1)[1]
+            chunk = chunk.split('## 时间线', 1)[0]
+            return summarize_text(chunk.strip())
+    clean_md = run_dir / 'precise' / 'precise_transcript.clean.md'
+    if clean_md.exists():
+        return summarize_text(clean_md.read_text(encoding='utf-8'))
+    return '待补充'
+
+
 def write_main_note(target_root: Path, run_dir: Path, source: dict, probe: dict):
     title = source.get('source_title') or source.get('suggested_run_name') or run_dir.name
     kind = source.get('kind', 'unknown')
@@ -53,7 +88,7 @@ tags:
 - Source URL: `{src}`
 - Source ID: `{src_id}`
 - Run name: `{run_name}`
-- Duration: `{duration}`
+- Duration: `{human_duration(duration)}`
 - Resolution: `{resolution}`
 
 ## Entry points
@@ -75,16 +110,53 @@ tags:
     (target_root / 'index.md').write_text(note, encoding='utf-8')
 
 
-def update_vault_index(vault_root: Path, subdir: str, entry_name: str, title: str, host: str, date_str: str):
+def load_index_entries(index_path: Path):
+    if not index_path.exists():
+        return []
+    text = index_path.read_text(encoding='utf-8')
+    marker = '<!-- INDEX_ENTRIES_START -->\n'
+    if marker not in text:
+        return []
+    payload = text.split(marker, 1)[1].split('\n<!-- INDEX_ENTRIES_END -->', 1)[0].strip()
+    if not payload:
+        return []
+    try:
+        return json.loads(payload)
+    except Exception:
+        return []
+
+
+def render_vault_index(entries):
+    lines = ['# Local Video Analysis', '', '## Recent analyses', '']
+    if not entries:
+        lines += ['- No analyses yet.', '']
+    else:
+        for e in entries:
+            lines += [
+                f"### [[{e['entry_name']}/index|{e['title']}]]",
+                '',
+                f"- Date: `{e['date']}`",
+                f"- Source host: `{e['host']}`",
+                f"- Source kind: `{e['kind']}`",
+                f"- Duration: `{e['duration']}`",
+                f"- Run name: `{e['run_name']}`",
+                '',
+                e['summary'],
+                '',
+            ]
+    lines += ['<!-- INDEX_ENTRIES_START -->', json.dumps(entries, ensure_ascii=False, indent=2), '<!-- INDEX_ENTRIES_END -->', '']
+    return '\n'.join(lines)
+
+
+def update_vault_index(vault_root: Path, subdir: str, entry: dict):
     main_index = vault_root / subdir / 'index.md'
     main_index.parent.mkdir(parents=True, exist_ok=True)
-    existing = main_index.read_text(encoding='utf-8') if main_index.exists() else '# Local Video Analysis\n\n## Recent analyses\n\n'
-    line = f'- {date_str} · [[{entry_name}/index|{title}]] · `{host}`\n'
-    if line not in existing:
-        if '## Recent analyses\n\n' not in existing:
-            existing = existing.rstrip() + '\n\n## Recent analyses\n\n'
-        existing += line
-    main_index.write_text(existing, encoding='utf-8')
+    entries = load_index_entries(main_index)
+    entries = [e for e in entries if e.get('entry_name') != entry['entry_name']]
+    entries.insert(0, entry)
+    entries.sort(key=lambda x: (x.get('date', ''), x.get('entry_name', '')), reverse=True)
+    entries = entries[:100]
+    main_index.write_text(render_vault_index(entries), encoding='utf-8')
 
 
 def main():
@@ -134,9 +206,17 @@ def main():
     copied.append(str(target_root / 'index.md'))
 
     title = source.get('source_title') or source.get('suggested_run_name') or run_dir.name
-    host = source.get('source_host') or 'unknown'
-    date_str = datetime.now().strftime('%Y-%m-%d')
-    update_vault_index(vault_dir, args.subdir, entry_name, title, host, date_str)
+    entry = {
+        'entry_name': entry_name,
+        'title': title,
+        'host': source.get('source_host') or 'unknown',
+        'kind': source.get('kind') or 'unknown',
+        'duration': human_duration(probe.get('duration_seconds') or probe.get('duration') or 'unknown'),
+        'run_name': source.get('suggested_run_name', run_dir.name),
+        'date': datetime.now().strftime('%Y-%m-%d'),
+        'summary': extract_summary(run_dir),
+    }
+    update_vault_index(vault_dir, args.subdir, entry)
     copied.append(str(vault_dir / args.subdir / 'index.md'))
     print('\n'.join(copied))
 

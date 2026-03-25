@@ -38,6 +38,11 @@ LVA_COOKIES_FROM_BROWSER=chrome bash scripts/analyze_video.sh "https://example.c
 python3 scripts/export_to_obsidian.py --run-dir ./runs/<video-run> --vault-dir /path/to/your/ObsidianVault
 ```
 
+导出后优先打开：
+
+- `Local Video Analysis/index.md`
+- 或单条结果下的 `Local Video Analysis/<run>/index.md`
+
 ## 6. 优先查看这些文件
 
 - `runs/<video>/precise/precise_transcript.clean.md`
