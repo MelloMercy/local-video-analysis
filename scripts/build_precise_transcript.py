@@ -21,6 +21,16 @@ TERM_FIXES = [
     ('Project Manager', 'project_manager'),
     ('sessionkey', 'sessionKey'),
     ('agenttoagent', 'agentToAgent'),
+    ('Cloud', 'Claude'),
+    ('Cloud Code', 'Claude Code'),
+    ('Cowork', 'CoWork'),
+    ('computer use', 'Computer Use'),
+    ('Computer use', 'Computer Use'),
+    ('OPS4.6', 'Opus 4.6'),
+    ('OPS 4.6', 'Opus 4.6'),
+    ('国际相机', '国际象棋'),
+    ('相机游戏', '象棋游戏'),
+    ('麦克朗S', 'macOS'),
 ]
 
 
@@ -172,8 +182,11 @@ def main():
     (root / 'precise_transcript.timeline.md').write_text('\n'.join(timeline), encoding='utf-8')
 
     review = ['# 可疑片段清单', '']
-    for seg in suspicious_segments:
-        review += [f"- [{fmt_ts(seg['start'])} - {fmt_ts(seg['end'])}] {seg['text']}"]
+    if suspicious_segments:
+        for seg in suspicious_segments:
+            review += [f"- [{fmt_ts(seg['start'])} - {fmt_ts(seg['end'])}] {seg['text']}"]
+    else:
+        review += ['- 未检测到明显可疑片段。']
     (root / 'suspicious_segments.md').write_text('\n'.join(review) + '\n', encoding='utf-8')
 
     print(json.dumps({

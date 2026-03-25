@@ -1,14 +1,36 @@
 #!/usr/bin/env python3
 import argparse
 import json
+import re
 from collections import defaultdict
 from pathlib import Path
+
+
+TERM_FIXES = [
+    ('Cloud', 'Claude'),
+    ('Cloud Code', 'Claude Code'),
+    ('Cowork', 'CoWork'),
+    ('computer use', 'Computer Use'),
+    ('Computer use', 'Computer Use'),
+    ('OPS4.6', 'Opus 4.6'),
+    ('OPS 4.6', 'Opus 4.6'),
+    ('国际相机', '国际象棋'),
+    ('相机游戏', '象棋游戏'),
+    ('麦克朗S', 'macOS'),
+]
 
 
 def load_json(path: Path):
     if not path.exists():
         return {}
     return json.loads(path.read_text(encoding='utf-8'))
+
+
+def normalize_text(text: str) -> str:
+    out = ' '.join((text or '').split())
+    for a, b in TERM_FIXES:
+        out = out.replace(a, b)
+    return out
 
 
 def human_duration(seconds):
@@ -33,7 +55,7 @@ def fmt_ts(sec):
 
 
 def summarize_text(text: str, limit=280):
-    text = ' '.join((text or '').split())
+    text = normalize_text(text)
     if len(text) <= limit:
         return text or '待补充'
     return text[:limit].rstrip() + '…'
@@ -44,7 +66,7 @@ def build_timeline(segments, bucket_seconds=60):
     for seg in segments:
         start = int(float(seg.get('start', 0)))
         bucket = start // bucket_seconds
-        t = ' '.join((seg.get('text') or '').split())
+        t = normalize_text(seg.get('text') or '')
         if t:
             buckets[bucket].append(t)
     out = []
@@ -56,18 +78,52 @@ def build_timeline(segments, bucket_seconds=60):
     return out
 
 
-def bullet_points_from_segments(segments, max_points=8):
+def sentence_split(text: str):
+    text = normalize_text(text)
+    return [x.strip() for x in re.split(r'(?<=[。！？.!?])\s+', text) if x.strip()]
+
+
+def bullet_points_from_text(summary: str, timeline, max_points=6):
     points = []
-    for seg in segments[: max_points * 2]:
-        t = ' '.join((seg.get('text') or '').split())
-        if not t:
+    for s in sentence_split(summary):
+        if len(s) < 18:
             continue
-        if len(t) < 12:
+        points.append(summarize_text(s, 110))
+        if len(points) >= max_points:
+            return points
+    for _, _, line in timeline:
+        if len(line) < 18:
             continue
-        points.append(summarize_text(t, 120))
+        points.append(summarize_text(line, 110))
         if len(points) >= max_points:
             break
-    return points
+    seen = []
+    uniq = []
+    for p in points:
+        if p not in seen:
+            seen.append(p)
+            uniq.append(p)
+    return uniq[:max_points]
+
+
+def extract_probe_fields(probe: dict):
+    duration = (
+        probe.get('duration_seconds')
+        or probe.get('duration')
+        or probe.get('format', {}).get('duration')
+        or probe.get('video', {}).get('duration')
+    )
+    width = (
+        probe.get('width')
+        or probe.get('pixel_width')
+        or probe.get('video', {}).get('width')
+    )
+    height = (
+        probe.get('height')
+        or probe.get('pixel_height')
+        or probe.get('video', {}).get('height')
+    )
+    return duration, width, height
 
 
 def main():
@@ -83,13 +139,11 @@ def main():
     base_transcript = load_json(run_dir / 'transcript.json')
 
     transcript = precise if precise.get('text') else base_transcript
-    text = transcript.get('text', '')
+    text = normalize_text(transcript.get('text', ''))
     segments = transcript.get('segments', [])
 
-    duration = probe.get('duration_seconds') or probe.get('duration') or 'unknown'
-    width = probe.get('width') or probe.get('pixel_width') or 'unknown'
-    height = probe.get('height') or probe.get('pixel_height') or 'unknown'
-    resolution = f'{width} x {height}' if width != 'unknown' and height != 'unknown' else 'unknown'
+    duration, width, height = extract_probe_fields(probe)
+    resolution = f'{width} x {height}' if width and height else 'unknown'
 
     overview = [
         f"- 输入来源：`{source.get('kind', 'unknown')}`",
@@ -105,8 +159,8 @@ def main():
     ]
 
     timeline = build_timeline(segments)
-    points = bullet_points_from_segments(segments)
     summary = summarize_text(text, 800)
+    points = bullet_points_from_text(summary, timeline)
 
     parts = ['# 视频分析报告', '', '## 视频概览', '', *overview, '', '## 整段总结', '', summary or '待补充', '', '## 时间线', '']
     if timeline:
