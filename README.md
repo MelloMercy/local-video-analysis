@@ -185,6 +185,7 @@ Typical outputs include:
 - `report.stub.md`
 - `report.final.md`
 - `frames/`
+- Obsidian-ready `index.md` (after export)
 - `audio.m4a`
 - `transcript.json`
 - `transcript.clean.md`
