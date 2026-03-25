@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import argparse
 import json
+import re
 import shutil
 from datetime import datetime
 from pathlib import Path
@@ -37,6 +38,28 @@ def human_duration(seconds):
     return f'{m}m {s}s'
 
 
+def clean_markdown_for_summary(text: str):
+    lines = []
+    for raw in (text or '').splitlines():
+        line = raw.strip()
+        if not line:
+            continue
+        if line.startswith('#'):
+            continue
+        if line.startswith('```'):
+            continue
+        if line in ('---', '***'):
+            continue
+        line = re.sub(r'^[-*+]\s+', '', line)
+        line = re.sub(r'^\d+\.\s+', '', line)
+        line = re.sub(r'!\[[^\]]*\]\([^)]*\)', '', line)
+        line = re.sub(r'\[([^\]]+)\]\([^)]*\)', r'\1', line)
+        line = line.strip()
+        if line:
+            lines.append(line)
+    return '\n'.join(lines)
+
+
 def extract_summary(run_dir: Path):
     final_report = run_dir / 'report.final.md'
     if final_report.exists():
@@ -45,10 +68,19 @@ def extract_summary(run_dir: Path):
         if marker in text:
             chunk = text.split(marker, 1)[1]
             chunk = chunk.split('## 时间线', 1)[0]
-            return summarize_text(chunk.strip())
+            cleaned = clean_markdown_for_summary(chunk)
+            if cleaned:
+                return summarize_text(cleaned)
     clean_md = run_dir / 'precise' / 'precise_transcript.clean.md'
     if clean_md.exists():
-        return summarize_text(clean_md.read_text(encoding='utf-8'))
+        cleaned = clean_markdown_for_summary(clean_md.read_text(encoding='utf-8'))
+        if cleaned:
+            return summarize_text(cleaned)
+    transcript_clean = run_dir / 'transcript.clean.md'
+    if transcript_clean.exists():
+        cleaned = clean_markdown_for_summary(transcript_clean.read_text(encoding='utf-8'))
+        if cleaned:
+            return summarize_text(cleaned)
     return '待补充'
 
 
