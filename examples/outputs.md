@@ -2,6 +2,9 @@
 
 典型输出目录结构：
 
+> 注：URL 输入时，`runs/` 下的目录名会优先基于视频标题 + 视频 ID 生成，而不是简单取 URL 路径最后一段。
+
+
 ```text
 runs/<video-name>/
 ├── probe.json

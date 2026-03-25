@@ -177,6 +177,9 @@ python3 scripts/build_precise_transcript.py /path/to/audio.m4a --out-dir ./runs/
 
 Typical outputs include:
 
+> For URL inputs, the run directory name is normalized from source metadata (title / video id) when available.
+
+
 - `probe.json`
 - `frames/`
 - `audio.m4a`

@@ -16,32 +16,33 @@ COOKIE_FILE="${LVA_COOKIE_FILE:-}"
 COOKIES_FROM_BROWSER="${LVA_COOKIES_FROM_BROWSER:-}"
 mkdir -p "$BASE_DIR"
 
-STEM="$(python3 - <<'PY' "$SOURCE"
-import sys
-from pathlib import Path
-from urllib.parse import urlparse
-src = sys.argv[1]
-if src.startswith('http://') or src.startswith('https://'):
-    p = urlparse(src)
-    name = Path(p.path).name or 'remote_video'
-    print(Path(name).stem or 'remote_video')
-else:
-    print(Path(src).expanduser().stem)
-PY
-)"
-OUT_DIR="$BASE_DIR/$STEM"
-SOURCE_DIR="$OUT_DIR/source"
-mkdir -p "$SOURCE_DIR"
+TMP_DIR="$BASE_DIR/.resolve_$(date +%s%N)"
+mkdir -p "$TMP_DIR"
+trap 'rm -rf "$TMP_DIR"' EXIT
 
 echo "[0/5] resolve source"
-CMD=(python3 "$SCRIPT_DIR/fetch_video.py" "$SOURCE" --output-dir "$SOURCE_DIR")
+CMD=(python3 "$SCRIPT_DIR/fetch_video.py" "$SOURCE" --output-dir "$TMP_DIR/source")
 if [[ -n "$COOKIE_FILE" ]]; then
   CMD+=(--cookie-file "$COOKIE_FILE")
 fi
 if [[ -n "$COOKIES_FROM_BROWSER" ]]; then
   CMD+=(--cookies-from-browser "$COOKIES_FROM_BROWSER")
 fi
-"${CMD[@]}" > "$OUT_DIR/source_result.json"
+"${CMD[@]}" > "$TMP_DIR/source_result.json"
+
+RUN_NAME="$(python3 - <<'PY' "$TMP_DIR/source_result.json"
+import json,sys
+print(json.load(open(sys.argv[1]))['suggested_run_name'])
+PY
+)"
+OUT_DIR="$BASE_DIR/$RUN_NAME"
+mkdir -p "$OUT_DIR"
+mv "$TMP_DIR/source_result.json" "$OUT_DIR/source_result.json"
+mkdir -p "$OUT_DIR/source"
+if [[ -d "$TMP_DIR/source" ]]; then
+  cp -R "$TMP_DIR/source/." "$OUT_DIR/source/" 2>/dev/null || true
+fi
+
 VIDEO_PATH="$(python3 - <<'PY' "$OUT_DIR/source_result.json"
 import json,sys
 print(json.load(open(sys.argv[1]))['video_path'])
@@ -82,6 +83,7 @@ cat <<EOF
 Done.
 Source input: $SOURCE
 Resolved video: $VIDEO_PATH
+Run name: $RUN_NAME
 Run directory: $OUT_DIR
 Source metadata: $OUT_DIR/source_result.json
 Probe: $OUT_DIR/probe.json
