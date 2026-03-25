@@ -40,6 +40,10 @@ def load_json(path: Path):
     return json.loads(path.read_text(encoding='utf-8'))
 
 
+def save_json(path: Path, payload):
+    path.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding='utf-8')
+
+
 def read_text(path: Path):
     if not path.exists():
         return ''
@@ -121,20 +125,21 @@ def extract_summary(run_dir: Path):
         marker = '## 整段总结'
         if marker in text:
             chunk = text.split(marker, 1)[1]
+            chunk = chunk.split('## 总体结论', 1)[0]
             chunk = chunk.split('## 时间线', 1)[0]
             cleaned = clean_markdown_for_summary(chunk)
             if cleaned:
-                return summarize_text(cleaned, 260)
+                return summarize_text(cleaned, 220)
     clean_md = run_dir / 'precise' / 'precise_transcript.clean.md'
     if clean_md.exists():
         cleaned = clean_markdown_for_summary(clean_md.read_text(encoding='utf-8'))
         if cleaned:
-            return summarize_text(cleaned, 260)
+            return summarize_text(cleaned, 220)
     transcript_clean = run_dir / 'transcript.clean.md'
     if transcript_clean.exists():
         cleaned = clean_markdown_for_summary(transcript_clean.read_text(encoding='utf-8'))
         if cleaned:
-            return summarize_text(cleaned, 260)
+            return summarize_text(cleaned, 220)
     return '待补充'
 
 
@@ -142,26 +147,12 @@ def extract_key_points(run_dir: Path, limit=5):
     final_report = read_text(run_dir / 'report.final.md')
     if '## 重点提取' in final_report:
         chunk = final_report.split('## 重点提取', 1)[1]
-        chunk = chunk.split('## 风险与问题', 1)[0]
+        chunk = chunk.split('## 风险与保留意见', 1)[0]
         points = []
         for line in chunk.splitlines():
             line = line.strip()
             if line.startswith('- '):
                 points.append(normalize_text(line))
-            if len(points) >= limit:
-                break
-        if points:
-            return points
-
-    cleaned = clean_markdown_for_summary(read_text(run_dir / 'precise' / 'precise_transcript.clean.md'))
-    if cleaned:
-        sentences = re.split(r'(?<=[。！？.!?])\s+|\n+', cleaned)
-        points = []
-        for s in sentences:
-            s = normalize_text(s.strip())
-            if len(s) < 12:
-                continue
-            points.append(f'- {summarize_text(s, 100)}')
             if len(points) >= limit:
                 break
         if points:
@@ -188,20 +179,7 @@ def extract_timeline_preview(run_dir: Path, limit=3):
             lines.append(current)
         if lines:
             return lines[:limit]
-
-    timeline_md = read_text(run_dir / 'precise' / 'precise_transcript.timeline.md')
-    previews = []
-    current_title = None
-    for raw in timeline_md.splitlines():
-        line = raw.strip()
-        if line.startswith('## ') or line.startswith('### '):
-            current_title = line.lstrip('#').strip()
-        elif line and current_title:
-            previews.append({'title': current_title, 'body': summarize_text(line, 120)})
-            current_title = None
-        if len(previews) >= limit:
-            break
-    return previews
+    return []
 
 
 def describe_frames(run_dir: Path):
@@ -315,19 +293,13 @@ tags:
 
 
 def load_index_entries(index_path: Path):
-    if not index_path.exists():
-        return []
-    text = index_path.read_text(encoding='utf-8')
-    marker = '<!-- INDEX_ENTRIES_START -->\n'
-    if marker not in text:
-        return []
-    payload = text.split(marker, 1)[1].split('\n<!-- INDEX_ENTRIES_END -->', 1)[0].strip()
-    if not payload:
-        return []
-    try:
-        return json.loads(payload)
-    except Exception:
-        return []
+    data_path = index_path.with_suffix('.entries.json')
+    if data_path.exists():
+        try:
+            return load_json(data_path) or []
+        except Exception:
+            return []
+    return []
 
 
 def render_entry_block(e):
@@ -400,8 +372,7 @@ def render_vault_index(entries):
 
     lines += render_group_section('By source host', by_host)
     lines += render_group_section('By source kind', by_kind)
-    lines += ['<!-- INDEX_ENTRIES_START -->', json.dumps(entries, ensure_ascii=False, indent=2), '<!-- INDEX_ENTRIES_END -->', '']
-    return '\n'.join(lines)
+    return '\n'.join(lines) + '\n'
 
 
 def update_vault_index(vault_root: Path, subdir: str, entry: dict):
@@ -413,6 +384,7 @@ def update_vault_index(vault_root: Path, subdir: str, entry: dict):
     entries.sort(key=lambda x: (x.get('date', ''), x.get('entry_name', '')), reverse=True)
     entries = entries[:100]
     main_index.write_text(render_vault_index(entries), encoding='utf-8')
+    save_json(main_index.with_suffix('.entries.json'), entries)
 
 
 def main():
@@ -475,6 +447,7 @@ def main():
     }
     update_vault_index(vault_dir, args.subdir, entry)
     copied.append(str(vault_dir / args.subdir / 'index.md'))
+    copied.append(str((vault_dir / args.subdir / 'index.md').with_suffix('.entries.json')))
 
     for path in copied:
         print(path)
