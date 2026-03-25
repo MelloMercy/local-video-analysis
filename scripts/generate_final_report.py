@@ -18,8 +18,25 @@ TERM_FIXES = [
     ('opencloud', 'OpenClaw'),
     ('国际相机', '国际象棋'),
     ('相机游戏', '象棋游戏'),
+    ('下相机', '下棋'),
     ('麦克朗S', 'macOS'),
     ('雅虎finance', '雅虎 Finance'),
+    ('numbers', 'Numbers'),
+    ('keynote', 'Keynote'),
+    ('pages', 'Pages'),
+    ('dispatch', 'Dispatch'),
+]
+
+SCENARIO_RULES = [
+    ('视频封面', '整理桌面上的视频封面图片到单独文件夹，验证桌面文件识别与整理能力。'),
+    ('Dispatch', '从手机端通过 Dispatch 给电脑发任务，验证跨设备下发与远程执行。'),
+    ('博客', '调用浏览器打开博客、进入第二篇文章并总结内容，验证浏览器操作与阅读总结。'),
+    ('Markdown', '把 Markdown 文件转换成 PDF，验证本地文档格式转换能力。'),
+    ('雅虎 Finance', '从财经网站抓取特斯拉、苹果、微软、英伟达股价，验证联网检索与信息汇总。'),
+    ('Numbers', '把股票数据写入 Numbers 表格并生成对比表，验证本地办公软件联动。'),
+    ('Keynote', '基于抓取到的数据生成演示文稿，验证幻灯片制作能力。'),
+    ('Pages', '继续生成 Pages 报告并改成中文，验证长文档生成与改写能力。'),
+    ('国际象棋', '直接操控 macOS 桌面版国际象棋，验证非网页桌面应用与游戏场景操控。'),
 ]
 
 
@@ -108,28 +125,28 @@ def build_timeline(segments, bucket_seconds=60):
         start = bucket * bucket_seconds
         end = start + bucket_seconds
         merged = ' '.join(buckets[bucket])
-        out.append((fmt_ts(start), fmt_ts(end), summarize_text(merged, 220)))
+        out.append((fmt_ts(start), fmt_ts(end), summarize_text(merged, 220), merged))
     return out
 
 
-def build_key_points(text_pool: str, title: str, max_points=8):
+def build_key_points(summary: str, timeline, title: str, max_points=8):
     points = []
     lowered_title = normalize_text(title).lower()
     rules = [
-        ('桌面版', '视频围绕 Claude 桌面版能力展开。'),
-        ('Computer Use', '重点展示了 Computer Use / 桌面操控能力。'),
-        ('CoWork', '视频覆盖了 CoWork / Code 侧的入口与使用方式。'),
-        ('手机', '视频展示了从手机向电脑发送任务并远程执行。'),
-        ('博客', '演示了浏览器自动打开博客、进入文章并做内容总结。'),
-        ('Markdown', '演示了把 Markdown 文件转换为 PDF。'),
-        ('股票', '演示了抓取股票信息并整理成表格。'),
-        ('Numbers', '演示了调用 Numbers 生成对比表。'),
-        ('Keynote', '演示了调用 Keynote 生成演示文稿。'),
-        ('Pages', '演示了调用 Pages 生成报告文档。'),
-        ('国际象棋', '演示了直接操控桌面版国际象棋游戏。'),
-        ('OpenClaw', '作者多次将 Claude 与 OpenClaw 做直接对比。'),
-        ('开箱即用', '作者强调 Claude 的开箱即用体验。'),
+        ('桌面版', '视频围绕 Claude 桌面版能力展开演示。'),
+        ('Computer Use', '核心展示点是 Computer Use / 桌面操控能力。'),
+        ('CoWork', '视频展示了 CoWork / Code 入口的实际操作方式。'),
+        ('手机', '视频专门演示了手机向电脑发任务并远程执行。'),
+        ('博客', '视频验证了浏览器自动打开页面、进入文章并总结内容。'),
+        ('Markdown', '视频验证了 Markdown 转 PDF 的本地文档处理能力。'),
+        ('Numbers', '视频验证了写入 Numbers 表格的办公链路。'),
+        ('Keynote', '视频验证了基于已有信息生成演示文稿。'),
+        ('Pages', '视频验证了生成与改写报告文档。'),
+        ('国际象棋', '视频重点展示了桌面版国际象棋操控，而不是网页场景。'),
+        ('OpenClaw', '作者多次把 Claude 与 OpenClaw 做直接对比。'),
+        ('开箱即用', '作者结论明显偏向强调 Claude 的开箱即用。'),
     ]
+    text_pool = ' '.join([summary] + [line for _, _, line, _ in timeline])
     for needle, point in rules:
         if needle in text_pool or needle.lower() in lowered_title:
             points.append(point)
@@ -138,113 +155,75 @@ def build_key_points(text_pool: str, title: str, max_points=8):
     return points[:max_points]
 
 
-def extract_scenarios(text_pool: str):
-    scenarios = [
-        {
-            'name': '桌面文件整理',
-            'needles': ['封面', '图片都放在一个文件夹', '桌面上关于视频封面的所有图片'],
-            'summary': '整理桌面上的视频封面图片，并自动归档到文件夹中。',
-        },
-        {
-            'name': '手机派发电脑任务',
-            'needles': ['dispatch', '发送任务到电脑', '手机上这里我打开了Claude的app'],
-            'summary': '在手机端派发任务，让电脑端 Claude 通过浏览器完成操作并返回结果。',
-        },
-        {
-            'name': '博客打开与内容总结',
-            'needles': ['打开我的博客', '进入第二篇文章', '总结文章内容'],
-            'summary': '调用浏览器打开博客、进入指定文章，并输出文章摘要。',
-        },
-        {
-            'name': 'Markdown 转 PDF',
-            'needles': ['markdown文件', '转为pdf', 'PDF格式'],
-            'summary': '把本地 Markdown 文件转换成 PDF 交付物。',
-        },
-        {
-            'name': '股票信息抓取 + Numbers 表格',
-            'needles': ['股票信息', 'Numbers', '雅虎 Finance', '对比表'],
-            'summary': '抓取多家公司的股票数据，并写入 Numbers 生成对比表。',
-        },
-        {
-            'name': 'Keynote / Pages 办公文档生成',
-            'needles': ['Keynote', '演示文稿', 'Pages', '报告已经创建完成'],
-            'summary': '基于前面抓取的信息继续生成 Keynote 演示稿和 Pages 报告文档。',
-        },
-        {
-            'name': '桌面版国际象棋操控',
-            'needles': ['国际象棋', '走动棋子', '桌面版的国际象棋游戏'],
-            'summary': '直接操控 macOS 桌面版国际象棋游戏，而不是只操作网页元素。',
-        },
-    ]
-    found = []
-    for item in scenarios:
-        if any(n in text_pool for n in item['needles']):
-            found.append(item)
-    return found
+def detect_scenarios(title: str, timeline):
+    text_pool = normalize_text(title + ' ' + ' '.join(raw for _, _, _, raw in timeline))
+    scenarios = []
+    for needle, desc in SCENARIO_RULES:
+        if needle in text_pool:
+            scenarios.append(desc)
+    return scenarios
 
 
-def build_overall_conclusion(title: str, scenarios, text_pool: str):
-    title = normalize_text(title).strip(' ：:')
+def build_overall_conclusion(title: str, scenarios, key_points):
+    title_brief = re.sub(r'^[🚀✨🔥💥⭐️🌟]+', '', normalize_text(title)).strip(' ：:')
+    scenario_count = len(scenarios)
+    first = key_points[0].rstrip('。') if key_points else '视频围绕实际桌面操作展开'
+    second = key_points[1].rstrip('。') if len(key_points) > 1 else '并通过多个连续案例证明流程可跑通'
     lines = []
-    if title and title != 'unknown':
-        lines.append(f'这条视频的主旨是围绕《{title}》展示 Claude 桌面版在真实电脑环境中的执行能力。')
-    if scenarios:
-        lines.append(f'从当前转写结果看，视频至少覆盖了 {len(scenarios)} 组连续演示场景，而不是只做单一 demo。')
-    if 'OpenClaw' in text_pool and ('降维打击' in text_pool or '开箱即用' in text_pool):
-        lines.append('作者的核心结论偏向于：Claude 在开箱即用和桌面操作流畅度上，明显优于他所熟悉的 OpenClaw 使用体验。')
-    return ' '.join(lines) or '待补充'
+    if title_brief and title_brief != 'unknown':
+        lines.append(f'这段视频主要围绕《{title_brief}》展开。')
+    lines.append(f'总体看，它不是单点演示，而是用 {scenario_count or "多个"} 个连续场景来证明：{first}；{second}。')
+    return ' '.join(lines)
 
 
-def build_core_judgement(text_pool: str):
-    items = []
-    if 'Computer Use' in text_pool:
-        items.append('作者重点想证明的不是聊天能力，而是 Claude 的桌面级 Computer Use 能力。')
-    if '手机' in text_pool and '发送任务到电脑' in text_pool:
-        items.append('视频把“手机给电脑派任务”作为一个关键卖点，用来证明跨设备协同体验。')
-    if 'OpenClaw' in text_pool:
-        items.append('视频中对 OpenClaw 的提及主要承担对照组角色，用来衬托 Claude 更省配置、更丝滑。')
-    if '国际象棋' in text_pool:
-        items.append('桌面版国际象棋演示承担“不是网页 automation，而是真桌面操控”的证明作用。')
-    return items or ['- 待补充']
+def build_core_view(text: str):
+    t = normalize_text(text)
+    views = []
+    if '手机' in t and ('Dispatch' in t or '发送任务到电脑' in t):
+        views.append('作者把“手机向电脑派发任务”作为区别于传统本地桌面操控的重要卖点。')
+    if '国际象棋' in t:
+        views.append('作者认为真正有说服力的部分，是能直接操控桌面版国际象棋这类非网页应用。')
+    if 'OpenClaw' in t and '降维打击' in t:
+        views.append('视频的表达立场非常鲜明：作者倾向认为 Claude 当前体验对 OpenClaw 构成明显优势。')
+    if '开箱即用' in t or '不需要做任何配置' in t:
+        views.append('作者反复强化“开箱即用、配置成本低”这一结论。')
+    return views or ['待补充']
 
 
-def build_scenario_lines(scenarios):
+def build_comparison_judgment(text: str):
+    t = normalize_text(text)
     lines = []
-    for idx, item in enumerate(scenarios, 1):
-        lines.append(f'{idx}. **{item["name"]}**：{item["summary"]}')
+    if 'OpenClaw' in t:
+        lines.append('视频中明确把 Claude 与 OpenClaw 做了直接对比，而且结论明显偏向 Claude。')
+    if '降维打击' in t:
+        lines.append('作者使用了“降维打击”这类强判断词，说明这不是中性测评，而是带明显主观倾向的体验表达。')
+    if '开箱即用' in t or '不需要做任何配置' in t:
+        lines.append('支撑这种判断的核心理由，是作者认为 Claude 更接近开箱即用，而 OpenClaw 需要更多配置与调试。')
     return lines or ['- 待补充']
 
 
-def build_comparison_judgement(text_pool: str):
-    items = []
-    if 'OpenClaw' in text_pool and '降维打击' in text_pool:
-        items.append('作者给出的对比判断非常鲜明：他认为 Claude 对 OpenClaw 是“降维打击”。')
-    if '开箱即用' in text_pool or '不需要做任何配置' in text_pool:
-        items.append('支撑这个判断的主要理由是：Claude 更接近开箱即用，而不是需要长时间调配置。')
-    if '丝滑' in text_pool:
-        items.append('视频不断强调“丝滑”“操作快”，说明作者把流畅度和执行观感看得很重。')
-    return items or ['- 待补充']
-
-
-def build_risks(text_pool: str):
-    items = [
-        '自动生成结果，关键术语、关键时间段和作者态度仍建议人工复核。',
-        '若来源为平台 URL，则下载成功率受平台策略影响，属于 best-effort。',
-        '当前总结主要基于自动转写与规则抽取，覆盖度比“压缩摘要”更高，但仍不等于人工完整看完视频后的专业评述。',
+def build_reservations(text: str):
+    t = normalize_text(text)
+    lines = [
+        '这份报告基于自动转写与自动拼装生成，不等于人工完整复盘。',
+        '视频里包含作者个人判断，尤其是对 Claude 与 OpenClaw 的对比，不能直接视为严格 benchmark 结论。',
+        '桌面应用操控、办公软件联动、游戏场景这些演示说明“样例可行”，但不自动等于所有设备、权限、页面都稳定复现。',
     ]
-    if '降维打击' in text_pool or '完全替代' in text_pool:
-        items.append('视频作者的结论带有明显主观立场，适合作为体验型样本，不应直接视作严格 benchmark。')
-    return items
+    if '点赞' in t or '谢谢大家观看' in t:
+        lines.append('视频后段包含明显自媒体收尾话术，自动摘要时应避免把这些内容误当成核心信息。')
+    return lines
 
 
-def build_action_suggestions(scenarios):
-    items = [
-        '优先阅读 `precise/precise_transcript.clean.md` 与 `precise/precise_transcript.timeline.md` 做逐段复核。',
-        '若要继续提升总结质量，建议针对“场景拆解”而不是单段摘要继续优化。',
-    ]
+def build_summary(title: str, scenarios, key_points, core_views):
+    title_brief = re.sub(r'^[🚀✨🔥💥⭐️🌟]+', '', normalize_text(title)).strip(' ：:')
+    parts = []
+    if title_brief and title_brief != 'unknown':
+        parts.append(f'这段视频主要围绕《{title_brief}》展开。')
     if scenarios:
-        items.append('可进一步把每个实战场景单独抽成结构化卡片，形成更稳定的知识沉淀。')
-    return items
+        parts.append(f'视频覆盖了 {len(scenarios)} 个连续实战场景，重点不是单一命令，而是完整演示 Claude 桌面版在文件整理、跨设备派发任务、浏览器操作、文档处理、办公软件联动和桌面游戏操控上的连续执行能力。')
+    if core_views and core_views[0] != '待补充':
+        parts.append(core_views[0])
+    return summarize_text(' '.join(parts), 520)
 
 
 def main():
@@ -262,9 +241,18 @@ def main():
     transcript = precise if precise.get('text') else base_transcript
     text = normalize_text(transcript.get('text', ''))
     segments = transcript.get('segments', [])
+
     duration, width, height = extract_probe_fields(probe)
     resolution = f'{width} x {height}' if width and height else 'unknown'
     title = source.get('source_title', 'unknown')
+    timeline = build_timeline(segments)
+    key_points = build_key_points(text, timeline, title)
+    scenarios = detect_scenarios(title, timeline)
+    overall = build_overall_conclusion(title, scenarios, key_points)
+    core_views = build_core_view(text)
+    comparison = build_comparison_judgment(text)
+    reservations = build_reservations(text)
+    summary = build_summary(title, scenarios, key_points, core_views)
 
     overview = [
         f"- 输入来源：`{source.get('kind', 'unknown')}`",
@@ -279,38 +267,35 @@ def main():
         f"- 分辨率：`{resolution}`",
     ]
 
-    timeline = build_timeline(segments)
-    text_pool = ' '.join([text] + [line for _, _, line in timeline])
-    key_points = build_key_points(text_pool, title)
-    scenarios = extract_scenarios(text_pool)
-    overall = build_overall_conclusion(title, scenarios, text_pool)
-    core_judgement = build_core_judgement(text_pool)
-    comparison = build_comparison_judgement(text_pool)
-    risks = build_risks(text_pool)
-    suggestions = build_action_suggestions(scenarios)
-
-    parts = ['# 视频分析报告', '', '## 视频概览', '', *overview, '']
-    parts += ['## 总体结论', '', overall, '']
-    parts += ['## 核心观点', '']
-    parts += [f'- {x}' for x in core_judgement]
+    parts = ['# 视频分析报告', '', '## 视频概览', '', *overview, '', '## 整段总结', '', summary or '待补充', '', '## 总体结论', '', overall, '', '## 核心观点', '']
+    parts += [f'- {x}' for x in core_views]
     parts += ['', '## 实战场景拆解', '']
-    parts += build_scenario_lines(scenarios)
+    if scenarios:
+        for idx, item in enumerate(scenarios, 1):
+            parts += [f'{idx}. {item}']
+    else:
+        parts += ['- 待补充']
+
     parts += ['', '## 对比判断', '']
     parts += [f'- {x}' for x in comparison]
-    parts += ['', '## 整段总结', '', summarize_text(overall + ' ' + ' '.join(key_points), 420), '']
-    parts += ['## 时间线', '']
+
+    parts += ['', '## 时间线', '']
     if timeline:
-        for start, end, line in timeline[:12]:
+        for start, end, line, _ in timeline[:12]:
             parts += [f'### {start} - {end}', '', line, '']
     else:
         parts += ['- 待补充', '']
+
     parts += ['## 重点提取', '']
-    parts += [f'- {p}' for p in key_points] if key_points else ['- 待补充']
-    parts += ['', '## 风险与问题', '']
-    parts += [f'- {x}' for x in risks]
-    parts += ['', '## 可执行建议', '']
-    parts += [f'- {x}' for x in suggestions]
-    parts += ['', '## 方法局限', '', '- 当前报告由元信息、自动转写与规则抽取拼装生成。', '- 该版本已经比简单摘要更强调覆盖度，但仍不应直接视为正式字幕级逐字稿或人工精读结论。', '']
+    if key_points:
+        parts += [f'- {p}' for p in key_points]
+    else:
+        parts += ['- 待补充']
+
+    parts += ['', '## 风险与保留意见', '']
+    parts += [f'- {x}' for x in reservations]
+
+    parts += ['', '## 可执行建议', '', '- 先读 `总体结论`、`核心观点`、`实战场景拆解`，再决定要不要深入时间线。', '- 若要复核是否真覆盖了所有场景，优先结合 `precise/precise_transcript.timeline.md` 与 `frames/` 交叉查看。', '- 若要形成更正式的对外分析稿，建议在当前结构化草案上做人工复核与补充。', '', '## 方法局限', '', '- 当前报告由元信息、自动转写与规则化拼装生成。', '- 该版本适合作为更全面的分析草案，不应直接视为正式字幕级逐字稿或严格评测报告。', '']
 
     out = run_dir / args.output
     out.write_text('\n'.join(parts), encoding='utf-8')
