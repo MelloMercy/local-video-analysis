@@ -141,6 +141,12 @@ python3 scripts/check_env.py
 See:
 - `docs/quickstart.md`
 
+Primary entrypoint:
+- `scripts/analyze_video.sh`
+
+Legacy compatibility entrypoint:
+- `scripts/analyze_local_video.sh` (kept as a wrapper, but no longer the recommended primary command)
+
 Run the full workflow with a local file:
 
 ```bash

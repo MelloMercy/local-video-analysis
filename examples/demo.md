@@ -10,7 +10,7 @@
 ## 最小 demo
 
 ```bash
-bash scripts/analyze_local_video.sh /path/to/video.mp4 30
+bash scripts/analyze_video.sh /path/to/video.mp4 30
 ```
 
 跑完后优先看：

@@ -2,6 +2,10 @@
 
 ## 标准流程
 
+主入口脚本：`analyze_video.sh`
+
+兼容旧入口：`analyze_local_video.sh`（内部转发到 `analyze_video.sh`）
+
 1. `video_probe.py`
    - 获取视频时长、分辨率、编码等基础信息
 

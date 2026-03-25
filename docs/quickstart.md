@@ -8,8 +8,16 @@ python3 scripts/check_env.py
 
 ## 2. 跑完整流程（本地文件）
 
+主入口：
+
 ```bash
 bash scripts/analyze_video.sh /path/to/video.mp4 30
+```
+
+兼容旧入口（仍可用，但不再推荐作为主入口）：
+
+```bash
+bash scripts/analyze_local_video.sh /path/to/video.mp4 30
 ```
 
 ## 3. 跑完整流程（视频 URL）
