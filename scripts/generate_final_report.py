@@ -91,6 +91,37 @@ def extract_probe_fields(probe: dict):
     return duration, width, height
 
 
+def build_minute_summary(start: int, merged: str) -> str:
+    t = normalize_text(merged)
+    tags = []
+
+    if start < 60:
+        return '开场先定调：作者宣布 Claude 桌面版更新，核心卖点是能直接操控电脑，并预告后面会用多个实战案例来证明这一点。'
+
+    if '视频封面' in t or '文件夹' in t or '图片' in t:
+        tags.append('这一分钟主要在演示第一个案例：把桌面上的视频封面图片整理进文件夹，用来验证本地文件识别与整理能力。')
+    if '手机' in t or 'Dispatch' in t or '发送任务到电脑' in t:
+        tags.append('这里切到手机派发任务场景，开始展示如何从手机给电脑端 Claude 下发任务。')
+    if '博客' in t or '第二篇文章' in t:
+        tags.append('这一段重点验证浏览器操作能力：打开博客、进入指定文章，再总结文章内容。')
+    if 'Markdown' in t or 'PDF' in t:
+        tags.append('这里展示文档处理能力：把 Markdown 文件转换成 PDF，验证本地文件格式转换是否可用。')
+    if '雅虎 Finance' in t or '股票' in t or 'Numbers' in t:
+        tags.append('这一段进入股票信息与表格联动场景：先抓取股价，再写入 Numbers 生成对比表。')
+    if 'Keynote' in t or '演示文稿' in t or 'PPT' in t:
+        tags.append('这里开始验证演示文稿生成能力：基于前面抓到的数据自动制作 Keynote / PPT。')
+    if 'Pages' in t or '中文内容' in t or '报告' in t:
+        tags.append('这一段继续验证长文档生成与改写：自动创建 Pages 报告，并把内容调整成中文。')
+    if '国际象棋' in t or '棋子' in t or '下棋' in t:
+        tags.append('这一段转入桌面版国际象棋场景，用来证明它能操控非网页桌面应用，而不是只会点浏览器。')
+    if 'OpenClaw' in t and ('降维打击' in t or '开箱即用' in t or '不需要做任何配置' in t):
+        tags.append('收尾阶段回到作者的核心判断：他认为 Claude 更接近开箱即用，而 OpenClaw 需要更多配置与调试。')
+
+    if not tags:
+        return '这一分钟主要是在延续上一段案例，继续补充操作步骤、执行过程和结果展示。'
+    return ' '.join(dict.fromkeys(tags))
+
+
 def build_timeline(segments, bucket_seconds=60):
     buckets = defaultdict(list)
     for seg in segments:
@@ -100,15 +131,13 @@ def build_timeline(segments, bucket_seconds=60):
         if t:
             buckets[bucket].append(t)
     out = []
-    prev_summary = ''
     for bucket in sorted(buckets.keys()):
         start = bucket * bucket_seconds
         end = start + bucket_seconds
         merged = ' '.join(buckets[bucket])
         excerpt = summarize_full(merged)
-        summary = summarize_full((prev_summary + ' ' + merged).strip())
+        summary = build_minute_summary(start, merged)
         out.append((fmt_ts(start), fmt_ts(end), summary, excerpt, merged))
-        prev_summary = merged[-160:]
     return out
 
 
