@@ -174,7 +174,7 @@ def write_run_home(target_root: Path, run_dir: Path, source: dict, probe: dict):
     key_points = extract_key_points(run_dir)
     timeline_preview = extract_timeline_preview(run_dir)
     frames_desc, frame_notes = describe_frames(run_dir)
-    timeline_md = '\n\n'.join([f"### {x['title']}\n- 摘要：{x['summary']}\n- 原文摘录：{x['excerpt']}" for x in timeline_preview]) if timeline_preview else '- 待补充'
+    timeline_md = '\n\n'.join([f"### {x['title']}\n\n摘要：{x['summary']}\n\n原文摘录：{x['excerpt']}" for x in timeline_preview]) if timeline_preview else '- 待补充'
     note = f'''---
 title: "{title}"
 run_name: "{run_name}"

@@ -74,6 +74,10 @@ def summarize_text(text: str, limit=280):
     return text[:limit].rstrip() + '…'
 
 
+def summarize_full(text: str) -> str:
+    return normalize_text(text) or '待补充'
+
+
 def extract_probe_fields(probe: dict):
     duration = probe.get('duration_seconds') or probe.get('duration') or probe.get('format', {}).get('duration') or probe.get('video', {}).get('duration')
     width = probe.get('width') or probe.get('pixel_width') or probe.get('video', {}).get('width')
@@ -101,8 +105,8 @@ def build_timeline(segments, bucket_seconds=60):
         start = bucket * bucket_seconds
         end = start + bucket_seconds
         merged = ' '.join(buckets[bucket])
-        excerpt = summarize_text(merged, 180)
-        summary = summarize_text((prev_summary + ' ' + merged).strip(), 90)
+        excerpt = summarize_full(merged)
+        summary = summarize_full((prev_summary + ' ' + merged).strip())
         out.append((fmt_ts(start), fmt_ts(end), summary, excerpt, merged))
         prev_summary = merged[-160:]
     return out
