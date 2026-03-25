@@ -7,7 +7,6 @@ from collections import defaultdict
 from datetime import datetime
 from pathlib import Path
 
-
 TERM_FIXES = [
     ('Cloud', 'Claude'),
     ('Cloud Code', 'Claude Code'),
@@ -20,6 +19,20 @@ TERM_FIXES = [
     ('相机游戏', '象棋游戏'),
     ('麦克朗S', 'macOS'),
 ]
+
+RUN_HOME = '阅读首页.md'
+VAULT_HOME = '首页.md'
+EXPORTED_FILES = {
+    'report.final.md': '01 视频分析报告.md',
+    'precise/precise_transcript.clean.md': '02 高精度逐字稿.md',
+    'precise/precise_transcript.timeline.md': '03 时间线.md',
+    'precise/suspicious_segments.md': '04 可疑片段.md',
+    'report.stub.md': '附：报告草稿.md',
+    'transcript.clean.md': '附：基础转写.md',
+    'transcript.timeline.md': '附：基础时间线.md',
+    'source_result.json': 'source_result.json',
+    'probe.json': 'probe.json',
+}
 
 
 def slugify(text: str):
@@ -76,11 +89,7 @@ def clean_markdown_for_summary(text: str):
         line = raw.strip()
         if not line:
             continue
-        if line.startswith('#'):
-            continue
-        if line.startswith('```'):
-            continue
-        if line in ('---', '***'):
+        if line.startswith('#') or line.startswith('```') or line in ('---', '***'):
             continue
         line = re.sub(r'^[-*+]\s+', '', line)
         line = re.sub(r'^\d+\.\s+', '', line)
@@ -93,22 +102,9 @@ def clean_markdown_for_summary(text: str):
 
 
 def extract_probe_fields(probe: dict):
-    duration = (
-        probe.get('duration_seconds')
-        or probe.get('duration')
-        or probe.get('format', {}).get('duration')
-        or probe.get('video', {}).get('duration')
-    )
-    width = (
-        probe.get('width')
-        or probe.get('pixel_width')
-        or probe.get('video', {}).get('width')
-    )
-    height = (
-        probe.get('height')
-        or probe.get('pixel_height')
-        or probe.get('video', {}).get('height')
-    )
+    duration = probe.get('duration_seconds') or probe.get('duration') or probe.get('format', {}).get('duration') or probe.get('video', {}).get('duration')
+    width = probe.get('width') or probe.get('pixel_width') or probe.get('video', {}).get('width')
+    height = probe.get('height') or probe.get('pixel_height') or probe.get('video', {}).get('height')
     if not (width and height):
         for stream in probe.get('streams', []):
             if stream.get('codec_type') == 'video':
@@ -122,28 +118,17 @@ def extract_summary(run_dir: Path):
     final_report = run_dir / 'report.final.md'
     if final_report.exists():
         text = final_report.read_text(encoding='utf-8')
-        marker = '## 整段总结'
-        if marker in text:
-            chunk = text.split(marker, 1)[1]
+        if '## 整段总结' in text:
+            chunk = text.split('## 整段总结', 1)[1]
             chunk = chunk.split('## 总体结论', 1)[0]
             chunk = chunk.split('## 时间线', 1)[0]
             cleaned = clean_markdown_for_summary(chunk)
             if cleaned:
-                return summarize_text(cleaned, 220)
-    clean_md = run_dir / 'precise' / 'precise_transcript.clean.md'
-    if clean_md.exists():
-        cleaned = clean_markdown_for_summary(clean_md.read_text(encoding='utf-8'))
-        if cleaned:
-            return summarize_text(cleaned, 220)
-    transcript_clean = run_dir / 'transcript.clean.md'
-    if transcript_clean.exists():
-        cleaned = clean_markdown_for_summary(transcript_clean.read_text(encoding='utf-8'))
-        if cleaned:
-            return summarize_text(cleaned, 220)
+                return summarize_text(cleaned, 160)
     return '待补充'
 
 
-def extract_key_points(run_dir: Path, limit=5):
+def extract_key_points(run_dir: Path, limit=4):
     final_report = read_text(run_dir / 'report.final.md')
     if '## 重点提取' in final_report:
         chunk = final_report.split('## 重点提取', 1)[1]
@@ -162,46 +147,42 @@ def extract_key_points(run_dir: Path, limit=5):
 
 def extract_timeline_preview(run_dir: Path, limit=3):
     final_report = read_text(run_dir / 'report.final.md')
-    if '## 时间线' in final_report:
-        chunk = final_report.split('## 时间线', 1)[1]
-        chunk = chunk.split('## 重点提取', 1)[0]
-        lines = []
-        current = None
-        for raw in chunk.splitlines():
-            line = raw.strip()
-            if line.startswith('### '):
-                if current:
-                    lines.append(current)
-                current = {'title': line[4:].strip(), 'body': ''}
-            elif line and current and not current['body']:
-                current['body'] = summarize_text(line, 120)
-        if current:
-            lines.append(current)
-        if lines:
-            return lines[:limit]
-    return []
+    if '## 时间线' not in final_report:
+        return []
+    chunk = final_report.split('## 时间线', 1)[1]
+    chunk = chunk.split('## 重点提取', 1)[0]
+    lines = []
+    current = None
+    for raw in chunk.splitlines():
+        line = raw.strip()
+        if line.startswith('### '):
+            if current:
+                lines.append(current)
+            current = {'title': line[4:].strip(), 'body': ''}
+        elif line and current and not current['body']:
+            current['body'] = summarize_text(line, 80)
+    if current:
+        lines.append(current)
+    return lines[:limit]
 
 
 def describe_frames(run_dir: Path):
     frames_dir = run_dir / 'frames'
     if not frames_dir.exists():
-        return '- `frames/` not found in this export.', []
+        return '- 暂无 frames。', []
     image_files = []
     for ext in ('*.jpg', '*.jpeg', '*.png', '*.webp'):
         image_files.extend(sorted(frames_dir.glob(ext)))
     count = len(image_files)
-    preview = [f.name for f in image_files[:6]]
-    desc = f'- `frames/` contains `{count}` extracted frame files.'
+    preview = [f.name for f in image_files[:4]]
+    desc = f'- `frames/` 共 `{count}` 张。'
     if preview:
-        desc += f" Example files: `{', '.join(preview)}`"
-    notes = [
-        '- Use `frames/` when transcript wording is ambiguous or when UI / slide / on-screen state matters.',
-        '- Prefer reviewing frames together with `precise_transcript.timeline.md` for higher confidence.',
-    ]
+        desc += f" 例如：`{', '.join(preview)}`"
+    notes = ['- 需要核对 UI、画面状态、操作步骤时，再结合 `03 时间线` 一起看。']
     return desc, notes
 
 
-def write_main_note(target_root: Path, run_dir: Path, source: dict, probe: dict):
+def write_run_home(target_root: Path, run_dir: Path, source: dict, probe: dict):
     title = source.get('source_title') or source.get('suggested_run_name') or run_dir.name
     kind = source.get('kind', 'unknown')
     host = source.get('source_host', 'unknown')
@@ -217,10 +198,7 @@ def write_main_note(target_root: Path, run_dir: Path, source: dict, probe: dict)
     frames_desc, frame_notes = describe_frames(run_dir)
 
     key_points_md = '\n'.join(key_points)
-    if timeline_preview:
-        timeline_md = '\n\n'.join([f"### {x['title']}\n\n{x['body']}" for x in timeline_preview])
-    else:
-        timeline_md = '- 待补充'
+    timeline_md = '\n\n'.join([f"### {x['title']}\n\n{x['body']}" for x in timeline_preview]) if timeline_preview else '- 待补充'
     frame_notes_md = '\n'.join([frames_desc] + frame_notes)
 
     note = f'''---
@@ -237,59 +215,48 @@ tags:
   - transcript
 ---
 
-# {title}
+# 视频阅读首页
 
-## Overview
+> {title}
 
-- Source kind: `{kind}`
-- Source host: `{host}`
-- Source URL: `{src}`
-- Source ID: `{src_id}`
-- Run name: `{run_name}`
-- Duration: `{human_duration(duration)}`
-- Resolution: `{resolution}`
+## 一眼看完
 
-## Recommended review path
+- 来源：`{host}`
+- 类型：`{kind}`
+- 时长：`{human_duration(duration)}`
+- 分辨率：`{resolution}`
 
-1. Read `[[report.final]]` for the fastest overview.
-2. Read `[[precise_transcript.clean]]` for transcript-first detail.
-3. Read `[[precise_transcript.timeline]]` for chronological reconstruction.
-4. Review `[[suspicious_segments]]` if confidence matters.
-5. Cross-check with `frames/` when visual evidence matters.
+## 先看哪里
 
-## Summary
+1. [[01 视频分析报告]]
+2. [[02 高精度逐字稿]]
+3. [[03 时间线]]
+4. [[04 可疑片段]]
+
+## 快速摘要
 
 {summary}
 
-## Key points
+## 关键点
 
 {key_points_md}
 
-## Timeline preview
+## 时间线预览
 
 {timeline_md}
 
-## Visual evidence
+## 画面证据
 
 {frame_notes_md}
 
-## Entry points
+## 附件
 
-- [[report.final]]
-- [[report.stub]]
-- [[transcript.clean]]
-- [[transcript.timeline]]
-- [[precise_transcript.clean]]
-- [[precise_transcript.timeline]]
-- [[suspicious_segments]]
-
-## Notes
-
-- `report.final.md` is the best default reading entry.
-- `precise_transcript.clean.md` is the best transcript-first reading entry.
-- `frames/` contains extracted visual evidence.
+- [[附：报告草稿]]
+- [[附：基础转写]]
+- [[附：基础时间线]]
+- `frames/`
 '''
-    (target_root / 'index.md').write_text(note, encoding='utf-8')
+    (target_root / RUN_HOME).write_text(note, encoding='utf-8')
 
 
 def load_index_entries(index_path: Path):
@@ -304,14 +271,9 @@ def load_index_entries(index_path: Path):
 
 def render_entry_block(e):
     return [
-        f"### [[{e['entry_name']}/index|{e['title']}]]",
+        f"### [[{e['entry_name']}/{RUN_HOME[:-3]}|{e['title_short']}]]",
         '',
-        f"- Date: `{e['date']}`",
-        f"- Source host: `{e['host']}`",
-        f"- Source kind: `{e['kind']}`",
-        f"- Duration: `{e['duration']}`",
-        f"- Run name: `{e['run_name']}`",
-        '',
+        f"- `{e['host']}` · `{e['duration']}` · `{e['date']}`",
         e['summary'],
         '',
     ]
@@ -320,11 +282,11 @@ def render_entry_block(e):
 def render_group_section(title, grouped):
     lines = [f'## {title}', '']
     if not grouped:
-        return lines + ['- None yet.', '']
+        return lines + ['- 暂无。', '']
     for key in sorted(grouped.keys()):
         lines += [f'### {key}', '']
         for e in grouped[key]:
-            lines += [f"- [[{e['entry_name']}/index|{e['title']}]] · `{e['date']}` · `{e['duration']}`"]
+            lines += [f"- [[{e['entry_name']}/{RUN_HOME[:-3]}|{e['title_short']}]] · `{e['date']}` · `{e['duration']}`"]
         lines += ['']
     return lines
 
@@ -334,57 +296,65 @@ def score_entry_for_pick(entry):
     summary = (entry.get('summary') or '').strip()
     if summary and summary != '待补充':
         score += 10
-        score += min(len(summary), 200) / 50
-    if entry.get('kind') == 'remote_url':
-        score += 1
     if entry.get('duration') and entry.get('duration') != 'unknown':
         score += 1
     return score
 
 
-def render_recommended_picks(entries, limit=5):
-    lines = ['## Recommended picks', '']
+def render_recommended_picks(entries, limit=3):
+    lines = ['## 推荐先看', '']
     picks = sorted(entries, key=lambda e: (score_entry_for_pick(e), e.get('date', '')), reverse=True)
     picks = [e for e in picks if (e.get('summary') or '').strip() != '待补充'][:limit]
     if not picks:
-        return lines + ['- No strong picks yet. Import more completed analyses first.', '']
+        return lines + ['- 暂无。', '']
     for e in picks:
-        lines += [f"- [[{e['entry_name']}/index|{e['title']}]] · `{e['host']}` · `{e['date']}`", f"  - {e['summary']}"]
+        lines += [f"- [[{e['entry_name']}/{RUN_HOME[:-3]}|{e['title_short']}]]", f"  - {e['summary']}"]
     lines += ['']
     return lines
 
 
-def render_vault_index(entries):
-    lines = ['# Local Video Analysis', '']
+def render_vault_home(entries):
+    lines = ['# Local Video Analysis', '', '## 入口', '', '- 看新导入的视频：从下面的 `最近分析` 开始。', '- 想快速浏览：优先看 `推荐先看`。', '']
     lines += render_recommended_picks(entries)
-    lines += ['## Recent analyses', '']
+    lines += ['## 最近分析', '']
     if not entries:
-        lines += ['- No analyses yet.', '']
+        lines += ['- 暂无分析结果。', '']
     else:
         for e in entries:
             lines += render_entry_block(e)
 
     by_host = defaultdict(list)
-    by_kind = defaultdict(list)
     for e in entries:
         by_host[e.get('host') or 'unknown'].append(e)
-        by_kind[e.get('kind') or 'unknown'].append(e)
-
-    lines += render_group_section('By source host', by_host)
-    lines += render_group_section('By source kind', by_kind)
+    lines += render_group_section('按来源网站看', by_host)
     return '\n'.join(lines) + '\n'
 
 
-def update_vault_index(vault_root: Path, subdir: str, entry: dict):
-    main_index = vault_root / subdir / 'index.md'
-    main_index.parent.mkdir(parents=True, exist_ok=True)
-    entries = load_index_entries(main_index)
+def update_vault_home(vault_root: Path, subdir: str, entry: dict):
+    main_home = vault_root / subdir / VAULT_HOME
+    main_home.parent.mkdir(parents=True, exist_ok=True)
+    entries = load_index_entries(main_home)
     entries = [e for e in entries if e.get('entry_name') != entry['entry_name']]
     entries.insert(0, entry)
     entries.sort(key=lambda x: (x.get('date', ''), x.get('entry_name', '')), reverse=True)
     entries = entries[:100]
-    main_index.write_text(render_vault_index(entries), encoding='utf-8')
-    save_json(main_index.with_suffix('.entries.json'), entries)
+    main_home.write_text(render_vault_home(entries), encoding='utf-8')
+    save_json(main_home.with_suffix('.entries.json'), entries)
+    legacy_index = main_home.parent / 'index.md'
+    if legacy_index.exists():
+        legacy_index.unlink()
+
+
+def clean_target_root(target_root: Path):
+    if not target_root.exists():
+        return
+    keep = set(EXPORTED_FILES.values()) | {RUN_HOME, 'frames', '.obsidian'}
+    for child in target_root.iterdir():
+        if child.name not in keep:
+            if child.is_dir():
+                shutil.rmtree(child)
+            else:
+                child.unlink()
 
 
 def main():
@@ -399,27 +369,17 @@ def main():
     entry_name = slugify(run_dir.name)
     target_root = vault_dir / args.subdir / entry_name
     target_root.mkdir(parents=True, exist_ok=True)
+    clean_target_root(target_root)
 
     source = load_json(run_dir / 'source_result.json')
     probe = load_json(run_dir / 'probe.json')
     duration, _, _ = extract_probe_fields(probe)
 
-    wanted = [
-        'report.final.md',
-        'report.stub.md',
-        'source_result.json',
-        'probe.json',
-        'transcript.clean.md',
-        'transcript.timeline.md',
-        'precise/precise_transcript.clean.md',
-        'precise/precise_transcript.timeline.md',
-        'precise/suspicious_segments.md',
-    ]
     copied = []
-    for rel in wanted:
+    for rel, exported_name in EXPORTED_FILES.items():
         src = run_dir / rel
         if src.exists():
-            dest = target_root / src.name
+            dest = target_root / exported_name
             shutil.copy2(src, dest)
             copied.append(str(dest))
 
@@ -431,13 +391,17 @@ def main():
         shutil.copytree(frames_dir, dest_frames)
         copied.append(str(dest_frames))
 
-    write_main_note(target_root, run_dir, source, probe)
-    copied.append(str(target_root / 'index.md'))
+    write_run_home(target_root, run_dir, source, probe)
+    copied.append(str(target_root / RUN_HOME))
 
     title = source.get('source_title') or source.get('suggested_run_name') or run_dir.name
+    title_short = normalize_text(title)
+    if len(title_short) > 28:
+        title_short = title_short[:28].rstrip() + '…'
     entry = {
         'entry_name': entry_name,
         'title': title,
+        'title_short': title_short,
         'host': source.get('source_host', 'unknown'),
         'kind': source.get('kind', 'unknown'),
         'duration': human_duration(duration),
@@ -445,9 +409,9 @@ def main():
         'date': datetime.now().strftime('%Y-%m-%d'),
         'summary': extract_summary(run_dir),
     }
-    update_vault_index(vault_dir, args.subdir, entry)
-    copied.append(str(vault_dir / args.subdir / 'index.md'))
-    copied.append(str((vault_dir / args.subdir / 'index.md').with_suffix('.entries.json')))
+    update_vault_home(vault_dir, args.subdir, entry)
+    copied.append(str(vault_dir / args.subdir / VAULT_HOME))
+    copied.append(str((vault_dir / args.subdir / VAULT_HOME).with_suffix('.entries.json')))
 
     for path in copied:
         print(path)
