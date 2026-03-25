@@ -142,6 +142,13 @@ See:
 - `docs/quickstart.md`
 - `docs/obsidian-integration.md`
 
+Fastest happy path:
+
+```bash
+bash scripts/analyze_video.sh /path/to/video.mp4 30
+python3 scripts/export_to_obsidian.py --run-dir ./runs/<video-run> --vault-dir /path/to/your/ObsidianVault
+```
+
 Primary entrypoint:
 - `scripts/analyze_video.sh`
 
@@ -277,6 +284,23 @@ re stable subtitle-grade output
 ## Reporting recommendation
 
 When generating a final report, include source metadata in the header whenever available:
+- input kind (`local_file` / `remote_url`)
+- original source
+- resolved local video path
+- source host
+- source title
+- source id
+- run name
+
+See:
+- `docs/report-template.md`
+
+---
+
+## License
+
+MIT
+lude source metadata in the header whenever available:
 - input kind (`local_file` / `remote_url`)
 - original source
 - resolved local video path
