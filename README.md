@@ -180,7 +180,9 @@ Typical outputs include:
 > For URL inputs, the run directory name is normalized from source metadata (title / video id) when available.
 
 
+- `source_result.json`
 - `probe.json`
+- `report.stub.md`
 - `frames/`
 - `audio.m4a`
 - `transcript.json`
@@ -197,11 +199,12 @@ See more in:
 
 ## Recommended workflow
 
-1. Run `analyze_local_video.sh`
+1. Run `analyze_video.sh`
 2. Read `precise_transcript.clean.md`
 3. Read `precise_transcript.timeline.md`
 4. Review `suspicious_segments.md` if you need more confidence
-5. Combine transcript + frames for final summary / timeline / key points
+5. Use `report.stub.md` as the default report header scaffold
+6. Combine transcript + frames for final summary / timeline / key points
 
 If your goal is:
 - tutorial review
