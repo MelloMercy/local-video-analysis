@@ -1,347 +1,150 @@
 # local-video-analysis
 
-A local-first workflow for turning videos into structured, usable knowledge.
+A local-first, transcript-first workflow for turning videos into precise transcript drafts, frame evidence, and structured summaries.
 
-`local-video-analysis` 帮你把本地视频处理成一套更容易消费的结果：
-- 视频基础信息（probe）
-- 关键帧抽取
-- 音频导出
-- 基础转写
-- 清洁版转写 / 时间线转写
-- 高精度逐字稿（实验版）
-- 可疑片段复核清单
-- 供后续总结 / 时间线 / 重点提取使用的稳定输入材料
-
-它特别适合：
-- 教程视频
-- 录屏视频
-- 技术讲解
-- 配置演示
-- 本地开发过程录制
-
----
-
-## Start here
-
-如果你是第一次进这个仓库，推荐按这个顺序看：
-
-1. `docs/install.md`
-2. `docs/quickstart.md`
-3. `docs/obsidian-integration.md`
-4. `examples/outputs.md`
-
-如果你想先快速理解这个项目值在哪里，优先看：
-- `What makes it useful`
-- `Knowledge workflow`
-- `docs/obsidian-integration.md`
-
----
+`local-video-analysis` 适合把教程、录屏、技术讲解这类视频，整理成一套真正可复核、可继续加工的分析材料，而不是只产出一段漂浮的摘要。
 
 ## Why this project
 
 很多视频分析流程有两个常见问题：
 
-1. **太依赖云端服务**
-2. **只有摘要，没有可追溯的逐字稿基础**
+1. 太依赖云端服务
+2. 只有摘要，没有可追溯的逐字稿基础
 
 这个项目的核心思路是：
 
-> **先尽量把本地视频转成高质量自动逐字稿草案，再结合画面做总结。**
+> 先尽量把视频转成高质量逐字稿草案，再结合画面做结构化总结。
 
-这样做的好处是：
-- 更少遗漏
-- 更容易追溯原话
-- 更适合做教程复盘和配置提取
-- 更适合后续继续增强精度
+所以它更强调：
+- local-first
+- transcript-first
+- frame + transcript dual evidence
+- tutorial / recording oriented
+- built for iterative precision improvement
 
----
+## What you get
 
-## What makes it useful
+运行一次分析后，通常会得到这些层次化结果：
 
-### 1. Local-first
-默认面向本地视频、本地脚本、本地处理，不要求先上传整段视频。
+- `source_result.json`：输入来源与解析结果
+- `probe.json`：时长、分辨率等视频元信息
+- `frames/`：关键帧证据
+- `audio.m4a`：导出的音频
+- `transcript.clean.md` / `transcript.timeline.md`：基础转写与时间线
+- `precise/precise_transcript.clean.md` / `precise/precise_transcript.timeline.md`：高精度逐字稿草案
+- `precise/suspicious_segments.md`：可疑片段复核清单
+- `report.stub.md` / `report.final.md`：结构化报告草稿与正式报告
+- `阅读首页.md`：导出到 Obsidian 后的单条阅读入口
 
-### 2. Transcript-first
-不是直接“看几帧就总结”，而是优先构建可复核的转写基础。
+## Capability boundary
 
-### 3. Structured outputs
-输出不是一坨原始 JSON，而是分层结果：
-- 基础转写
-- 清洁版
-- 时间线版
-- 高精度逐字稿实验版
-- 可疑片段清单
+当前版本最适合：
+- 教程视频
+- 录屏视频
+- 产品/工具演示
+- 配置过程复盘
+- 本地开发过程记录
 
-### 4. Built for iterative improvement
-项目结构就是为后续升级准备的：
-- 术语白名单增强
-- 可疑片段重跑
-- 人工校对模式
-- 多模型交叉转写
-- 更稳的字幕级输出
+当前版本已经比较稳定的是：
+- 高质量自动逐字稿草案
+- URL / 本地文件统一入口
+- 结构化报告生成
+- Obsidian 阅读导出
 
----
+当前版本仍然保持保守预期：
+- 更像“高质量自动草案”，不是正式发布级字幕
+- 仍建议保留人工复核
+- URL ingestion 是 best-effort，不宣称支持所有视频平台
 
-## Current capability boundary
+对外推荐表述：
 
-当前版本已经达到：
-- 高质量自动转写草案
-- 适合教程类 / 录屏类视频的结构化总结前处理
-- 高精度逐字稿实验版
-- 可疑片段重跑
-- 术语后处理与尾部幻觉清洗
+> Supports local video files and best-effort URL ingestion for publicly accessible video sources.
 
-当前版本还没有稳定达到：
-- 可直接发布的正式字幕级逐字稿
-- 全术语零误差
-- 完全免人工复核
+## Start here
 
-所以当前最推荐的使用方式是：
+如果你第一次进仓库，建议按这个顺序看：
 
-> **把它当作“高质量自动逐字稿 + 画面分析”的底座，而不是把它当成已经 100% 完成的字幕机。**
-
----
-
-## Project structure
-
-```text
-local-video-analysis/
-├── README.md
-├── LICENSE
-├── .gitignore
-├── docs/
-│   ├── install.md
-│   ├── quickstart.md
-│   ├── workflow.md
-│   ├── roadmap.md
-│   └── tech-glossary.txt
-├── examples/
-│   └── outputs.md
-└── scripts/
-    ├── analyze_local_video.sh
-    ├── check_env.py
-    ├── video_probe.py
-    ├── extract_frames.swift
-    ├── export_audio.swift
-    ├── transcribe_audio.py
-    ├── postprocess_transcript.py
-    ├── enhance_audio.sh
-    ├── build_precise_transcript.py
-    └── transcribe_audio_segmented.py
-```
-
----
-
-## Docs map
-
-- `docs/install.md` — 安装依赖与环境检查
-- `docs/quickstart.md` — 最快跑通主流程
-- `docs/workflow.md` — 处理链路说明
-- `docs/url-inputs.md` — URL 输入与 cookies 用法
-- `docs/obsidian-integration.md` — 导出到 Obsidian 的知识工作流
-- `docs/roadmap.md` — 后续能力规划
-- `docs/report-template.md` — 报告头部元信息模板
-- `examples/outputs.md` — 输出结构示例
-
----
-
-## Install
-
-See:
-- `docs/install.md`
-
-Typical macOS setup:
-
-```bash
-brew install ffmpeg
-python3 -m pip install --user mlx-whisper
-```
-
-Verify environment:
-
-```bash
-python3 scripts/check_env.py
-```
-
----
+1. `docs/install.md`
+2. `docs/quickstart.md`
+3. `docs/workflow.md`
+4. `docs/obsidian-integration.md`
+5. `examples/outputs.md`
 
 ## Quick start
 
-See:
-- `docs/quickstart.md`
-- `docs/obsidian-integration.md`
-
-Fastest happy path:
-
-```bash
-bash scripts/analyze_video.sh /path/to/video.mp4 30
-python3 scripts/export_to_obsidian.py --run-dir ./runs/<video-run> --vault-dir /path/to/your/ObsidianVault
-```
-
-Primary entrypoint:
+主入口：
 - `scripts/analyze_video.sh`
 
-Legacy compatibility entrypoint:
-- `scripts/analyze_local_video.sh` (kept as a wrapper, but no longer the recommended primary command)
+兼容入口：
+- `scripts/analyze_local_video.sh`（wrapper，保留兼容，不再作为主推荐）
 
-Run the full workflow with a local file:
+分析本地视频：
 
 ```bash
 bash scripts/analyze_video.sh /path/to/video.mp4 30
 ```
 
-Run the full workflow with a video URL:
+分析公开视频 URL：
 
 ```bash
 bash scripts/analyze_video.sh "https://example.com/video-page" 30
 ```
 
-If the platform page requires login:
+需要浏览器 cookies 时：
 
 ```bash
 LVA_COOKIES_FROM_BROWSER=chrome bash scripts/analyze_video.sh "https://example.com/video-page" 30
 ```
 
-Run the precise transcript pipeline only:
+导出到 Obsidian：
 
 ```bash
-python3 scripts/build_precise_transcript.py /path/to/audio.m4a --out-dir ./runs/demo --prompt-file ./docs/tech-glossary.txt
+python3 scripts/export_to_obsidian.py --run-dir ./runs/<video-run> --vault-dir /path/to/your/ObsidianVault
 ```
 
----
+## Obsidian reading flow
 
-## Typical outputs
+当前导出策略已经收敛成：
 
-Typical outputs include:
+- 不再强调 vault 级首页
+- 每条视频目录里的 `阅读首页.md` 是真正入口
+- `阅读首页.md` 默认排在 `01 视频分析报告.md` 前面
+- `01 视频分析报告.md`、`02 高精度逐字稿.md`、`03 时间线.md`、`04 可疑片段.md` 作为正式阅读链路
 
-> For URL inputs, the run directory name is normalized from source metadata (title / video id) when available.
+这让 Obsidian 更像阅读空间，而不是工程产物目录。
 
+## Docs map
 
-- `source_result.json`
-- `probe.json`
-- `report.stub.md`
-- `report.final.md`
-- `frames/`
-- Obsidian-ready `index.md` reading homepage with summary, key points, timeline preview, and frame review guidance (after export)
-- Vault-level `Local Video Analysis/index.md` overview page with recommended picks, recent analyses, metadata, short summaries, and grouping views (after export)
-- `audio.m4a`
-- `transcript.json`
-- `transcript.clean.md`
-- `transcript.timeline.md`
-- `precise/precise_transcript.clean.md`
-- `precise/precise_transcript.timeline.md`
-- `precise/suspicious_segments.md`
-
-See more in:
-- `examples/outputs.md`
-
----
-
-## Recommended workflow
-
-1. Run `analyze_video.sh`
-2. Read `precise_transcript.clean.md`
-3. Read `precise_transcript.timeline.md`
-4. Review `suspicious_segments.md` if you need more confidence
-5. Use `report.stub.md` as the default report header scaffold
-6. Combine transcript + frames for final summary / timeline / key points
-
-If your goal is:
-- tutorial review
-- configuration extraction
-- workflow reconstruction
-- structured summaries
-
-then the current version is already very useful.
-
-If your goal is:
-- release-grade subtitles
-
-then keep a lightweight human review step.
-
----
+- `docs/install.md` — 安装依赖与环境检查
+- `docs/quickstart.md` — 最快跑通主流程
+- `docs/workflow.md` — 完整处理链路说明
+- `docs/url-inputs.md` — URL 输入、cookies 与失败边界
+- `docs/obsidian-integration.md` — Obsidian 导出与阅读工作流
+- `docs/report-template.md` — 报告头部元信息模板
+- `docs/roadmap.md` — 后续能力规划
+- `docs/project-skill-sync.md` — GitHub 项目与 OpenClaw skill 同步说明
+- `examples/outputs.md` — 输出结构示例
 
 ## Project + Skill
 
-Recommended split:
-- **Project**: the source of truth for iteration, experiments, versioning, and GitHub collaboration
-- **Skill**: the OpenClaw-facing entry point for direct agent use
+推荐双轨并存：
 
-In practice:
+- **Project**：长期迭代、版本管理、GitHub 协作的 source of truth
+- **Skill**：OpenClaw 直接调用入口
 
-> iterate in the project first, then sync the stable workflow back into the skill.
+实践上就是：
 
----
+> 先在 project 里迭代稳定能力，再同步回 skill。
 
 ## Roadmap
 
-See:
-- `docs/roadmap.md`
-
-Main directions:
-- stronger glossary and config-key correction
-- better suspicious-segment detection
-- lightweight human review mode
+当前后续方向：
+- terminology correction
+- human review mode
 - multi-model cross-checking
-- more stable subtitle-grade output
-
----
-
-## Reporting recommendation
-
-When generating a final report, include source metadata in the header whenever available:
-- input kind (`local_file` / `remote_url`)
-- original source
-- resolved local video path
-- source host
-- source title
-- source id
-- run name
-
-See:
-- `docs/report-template.md`
-
----
-
-## License
-
-MIT
-re stable subtitle-grade output
-
----
-
-## Reporting recommendation
-
-When generating a final report, include source metadata in the header whenever available:
-- input kind (`local_file` / `remote_url`)
-- original source
-- resolved local video path
-- source host
-- source title
-- source id
-- run name
-
-See:
-- `docs/report-template.md`
-
----
-
-## License
-
-MIT
-lude source metadata in the header whenever available:
-- input kind (`local_file` / `remote_url`)
-- original source
-- resolved local video path
-- source host
-- source title
-- source id
-- run name
-
-See:
-- `docs/report-template.md`
-
----
+- batch processing
+- subtitle-grade output quality
+- 更稳的 URL ingestion 失败提示与降级建议
 
 ## License
 
