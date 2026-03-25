@@ -114,17 +114,40 @@ def extract_probe_fields(probe: dict):
     return duration, width, height
 
 
+def extract_section(text: str, start_marker: str, end_markers: list[str]):
+    if start_marker not in text:
+        return ''
+    chunk = text.split(start_marker, 1)[1]
+    for marker in end_markers:
+        if marker in chunk:
+            chunk = chunk.split(marker, 1)[0]
+    return clean_markdown_for_summary(chunk).strip()
+
+
 def extract_summary(run_dir: Path):
     final_report = run_dir / 'report.final.md'
     if final_report.exists():
         text = final_report.read_text(encoding='utf-8')
-        if '## 整段总结' in text:
-            chunk = text.split('## 整段总结', 1)[1]
-            chunk = chunk.split('## 总体结论', 1)[0]
-            chunk = chunk.split('## 时间线', 1)[0]
-            cleaned = clean_markdown_for_summary(chunk)
-            if cleaned:
-                return summarize_text(cleaned, 160)
+        overall = extract_section(text, '## 总体结论', ['## 核心观点'])
+        scenarios = extract_section(text, '## 实战场景拆解', ['## 对比判断'])
+        parts = []
+        if overall:
+            parts.append(overall)
+        if scenarios:
+            scenario_lines = []
+            for line in scenarios.splitlines():
+                line = re.sub(r'^\d+\.\s*', '', line).strip()
+                if line:
+                    scenario_lines.append(line)
+                if len(scenario_lines) >= 3:
+                    break
+            if scenario_lines:
+                parts.append('场景覆盖：' + '；'.join(scenario_lines) + '。')
+        if parts:
+            return '\n\n'.join(parts)
+        brief = extract_section(text, '## 整段总结', ['## 总体结论', '## 时间线'])
+        if brief:
+            return brief
     return '待补充'
 
 
@@ -314,8 +337,9 @@ def render_recommended_picks(entries, limit=3):
 
 
 def render_vault_home(entries):
-    lines = ['# Local Video Analysis', '', '## 入口', '', '- 看新导入的视频：从下面的 `最近分析` 开始。', '- 想快速浏览：优先看 `推荐先看`。', '']
-    lines += render_recommended_picks(entries)
+    lines = ['# Local Video Analysis', '', '## 入口', '', '- 看新导入的视频：优先打开它的 `阅读首页`。', '- 想快速浏览历史结果：再看下面列表。', '']
+    if len(entries) > 1:
+        lines += render_recommended_picks(entries)
     lines += ['## 最近分析', '']
     if not entries:
         lines += ['- 暂无分析结果。', '']
@@ -326,7 +350,8 @@ def render_vault_home(entries):
     by_host = defaultdict(list)
     for e in entries:
         by_host[e.get('host') or 'unknown'].append(e)
-    lines += render_group_section('按来源网站看', by_host)
+    if len(by_host) > 1:
+        lines += render_group_section('按来源网站看', by_host)
     return '\n'.join(lines) + '\n'
 
 
