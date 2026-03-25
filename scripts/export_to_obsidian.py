@@ -8,9 +8,30 @@ from datetime import datetime
 from pathlib import Path
 
 
+TERM_FIXES = [
+    ('Cloud', 'Claude'),
+    ('Cloud Code', 'Claude Code'),
+    ('Cowork', 'CoWork'),
+    ('computer use', 'Computer Use'),
+    ('Computer use', 'Computer Use'),
+    ('OPS4.6', 'Opus 4.6'),
+    ('OPS 4.6', 'Opus 4.6'),
+    ('国际相机', '国际象棋'),
+    ('相机游戏', '象棋游戏'),
+    ('麦克朗S', 'macOS'),
+]
+
+
 def slugify(text: str):
     safe = ''.join(c if c.isalnum() or c in '-_ .' else '-' for c in text)
     return '-'.join(safe.split()) or 'video-analysis'
+
+
+def normalize_text(text: str):
+    out = ' '.join((text or '').split())
+    for a, b in TERM_FIXES:
+        out = out.replace(a, b)
+    return out
 
 
 def load_json(path: Path):
@@ -26,7 +47,7 @@ def read_text(path: Path):
 
 
 def summarize_text(text: str, limit=140):
-    text = ' '.join((text or '').split())
+    text = normalize_text(text)
     if len(text) <= limit:
         return text or '待补充'
     return text[:limit].rstrip() + '…'
@@ -67,6 +88,32 @@ def clean_markdown_for_summary(text: str):
     return '\n'.join(lines)
 
 
+def extract_probe_fields(probe: dict):
+    duration = (
+        probe.get('duration_seconds')
+        or probe.get('duration')
+        or probe.get('format', {}).get('duration')
+        or probe.get('video', {}).get('duration')
+    )
+    width = (
+        probe.get('width')
+        or probe.get('pixel_width')
+        or probe.get('video', {}).get('width')
+    )
+    height = (
+        probe.get('height')
+        or probe.get('pixel_height')
+        or probe.get('video', {}).get('height')
+    )
+    if not (width and height):
+        for stream in probe.get('streams', []):
+            if stream.get('codec_type') == 'video':
+                width = width or stream.get('width')
+                height = height or stream.get('height')
+                break
+    return duration, width, height
+
+
 def extract_summary(run_dir: Path):
     final_report = run_dir / 'report.final.md'
     if final_report.exists():
@@ -100,7 +147,7 @@ def extract_key_points(run_dir: Path, limit=5):
         for line in chunk.splitlines():
             line = line.strip()
             if line.startswith('- '):
-                points.append(line)
+                points.append(normalize_text(line))
             if len(points) >= limit:
                 break
         if points:
@@ -111,7 +158,7 @@ def extract_key_points(run_dir: Path, limit=5):
         sentences = re.split(r'(?<=[。！？.!?])\s+|\n+', cleaned)
         points = []
         for s in sentences:
-            s = s.strip()
+            s = normalize_text(s.strip())
             if len(s) < 12:
                 continue
             points.append(f'- {summarize_text(s, 100)}')
@@ -183,10 +230,8 @@ def write_main_note(target_root: Path, run_dir: Path, source: dict, probe: dict)
     src = source.get('source', 'unknown')
     src_id = source.get('source_id', 'unknown')
     run_name = source.get('suggested_run_name', run_dir.name)
-    duration = probe.get('duration_seconds') or probe.get('duration') or 'unknown'
-    width = probe.get('width') or probe.get('pixel_width') or 'unknown'
-    height = probe.get('height') or probe.get('pixel_height') or 'unknown'
-    resolution = f'{width} x {height}' if width != 'unknown' and height != 'unknown' else 'unknown'
+    duration, width, height = extract_probe_fields(probe)
+    resolution = f'{width} x {height}' if width and height else 'unknown'
     today = datetime.now().strftime('%Y-%m-%d')
     summary = extract_summary(run_dir)
     key_points = extract_key_points(run_dir)
@@ -385,6 +430,7 @@ def main():
 
     source = load_json(run_dir / 'source_result.json')
     probe = load_json(run_dir / 'probe.json')
+    duration, _, _ = extract_probe_fields(probe)
 
     wanted = [
         'report.final.md',
@@ -420,16 +466,18 @@ def main():
     entry = {
         'entry_name': entry_name,
         'title': title,
-        'host': source.get('source_host') or 'unknown',
-        'kind': source.get('kind') or 'unknown',
-        'duration': human_duration(probe.get('duration_seconds') or probe.get('duration') or 'unknown'),
+        'host': source.get('source_host', 'unknown'),
+        'kind': source.get('kind', 'unknown'),
+        'duration': human_duration(duration),
         'run_name': source.get('suggested_run_name', run_dir.name),
         'date': datetime.now().strftime('%Y-%m-%d'),
         'summary': extract_summary(run_dir),
     }
     update_vault_index(vault_dir, args.subdir, entry)
     copied.append(str(vault_dir / args.subdir / 'index.md'))
-    print('\n'.join(copied))
+
+    for path in copied:
+        print(path)
 
 
 if __name__ == '__main__':
