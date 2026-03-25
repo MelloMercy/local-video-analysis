@@ -312,8 +312,35 @@ def render_group_section(title, grouped):
     return lines
 
 
+def score_entry_for_pick(entry):
+    score = 0
+    summary = (entry.get('summary') or '').strip()
+    if summary and summary != '待补充':
+        score += 10
+        score += min(len(summary), 200) / 50
+    if entry.get('kind') == 'remote_url':
+        score += 1
+    if entry.get('duration') and entry.get('duration') != 'unknown':
+        score += 1
+    return score
+
+
+def render_recommended_picks(entries, limit=5):
+    lines = ['## Recommended picks', '']
+    picks = sorted(entries, key=lambda e: (score_entry_for_pick(e), e.get('date', '')), reverse=True)
+    picks = [e for e in picks if (e.get('summary') or '').strip() != '待补充'][:limit]
+    if not picks:
+        return lines + ['- No strong picks yet. Import more completed analyses first.', '']
+    for e in picks:
+        lines += [f"- [[{e['entry_name']}/index|{e['title']}]] · `{e['host']}` · `{e['date']}`", f"  - {e['summary']}"]
+    lines += ['']
+    return lines
+
+
 def render_vault_index(entries):
-    lines = ['# Local Video Analysis', '', '## Recent analyses', '']
+    lines = ['# Local Video Analysis', '']
+    lines += render_recommended_picks(entries)
+    lines += ['## Recent analyses', '']
     if not entries:
         lines += ['- No analyses yet.', '']
     else:
