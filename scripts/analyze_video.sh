@@ -79,8 +79,11 @@ python3 "$SCRIPT_DIR/build_precise_transcript.py" \
   --out-dir "$PRECISE_DIR" \
   --prompt-file "$PROMPT_FILE" > "$OUT_DIR/precise_result.json"
 
-echo "[6/6] generate report stub"
+echo "[6/7] generate report stub"
 python3 "$SCRIPT_DIR/generate_report_stub.py" --run-dir "$OUT_DIR" --output report.stub.md > "$OUT_DIR/report_stub_path.txt"
+
+echo "[7/7] generate final report draft"
+python3 "$SCRIPT_DIR/generate_final_report.py" --run-dir "$OUT_DIR" --output report.final.md > "$OUT_DIR/report_final_path.txt"
 
 cat <<EOF
 Done.

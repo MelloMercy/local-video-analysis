@@ -183,6 +183,7 @@ Typical outputs include:
 - `source_result.json`
 - `probe.json`
 - `report.stub.md`
+- `report.final.md`
 - `frames/`
 - `audio.m4a`
 - `transcript.json`

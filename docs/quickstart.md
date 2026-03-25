@@ -32,6 +32,12 @@ bash scripts/analyze_video.sh "https://example.com/video-page" 30
 LVA_COOKIES_FROM_BROWSER=chrome bash scripts/analyze_video.sh "https://example.com/video-page" 30
 ```
 
+## 5. 导出到 Obsidian
+
+```bash
+python3 scripts/export_to_obsidian.py --run-dir ./runs/<video-run> --vault-dir /path/to/your/ObsidianVault
+```
+
 ## 3. 优先查看这些文件
 
 - `runs/<video>/precise/precise_transcript.clean.md`
