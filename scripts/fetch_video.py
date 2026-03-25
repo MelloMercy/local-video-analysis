@@ -28,10 +28,25 @@ def is_url(text: str) -> bool:
         return False
 
 
+def build_error(stderr: str, stdout: str) -> dict:
+    raw = (stderr or stdout or '').strip()
+    hint = None
+    low = raw.lower()
+    if 'login' in low or 'cookies' in low or 'sign in' in low:
+        hint = 'The source may require cookies or login. Try --cookie-file or --cookies-from-browser.'
+    elif 'drm' in low or 'protected' in low:
+        hint = 'The source may be DRM-protected or otherwise restricted.'
+    elif 'youtube' in low and ('reload' in low or 'signature extraction failed' in low):
+        hint = 'The platform page is unstable right now. Retry later, or use cookies/browser login, or provide a direct media URL/local file.'
+    return {'status': 'error', 'message': raw, 'hint': hint}
+
+
 def main():
     p = argparse.ArgumentParser()
     p.add_argument('source')
     p.add_argument('--output-dir', required=True)
+    p.add_argument('--cookie-file')
+    p.add_argument('--cookies-from-browser', choices=['chrome', 'safari', 'firefox', 'edge', 'brave', 'chromium'])
     args = p.parse_args()
 
     out_dir = Path(args.output_dir).expanduser().resolve()
@@ -52,16 +67,23 @@ def main():
         sys.exit(3)
 
     target_template = str(out_dir / 'source.%(ext)s')
+    info_json = out_dir / 'source.info.json'
     cmd = [
         ytdlp,
         '--no-playlist',
+        '--write-info-json',
         '-o', target_template,
         '--print', 'after_move:filepath',
-        source,
     ]
+    if args.cookie_file:
+        cmd.extend(['--cookies', str(Path(args.cookie_file).expanduser().resolve())])
+    elif args.cookies_from_browser:
+        cmd.extend(['--cookies-from-browser', args.cookies_from_browser])
+    cmd.append(source)
+
     result = subprocess.run(cmd, capture_output=True, text=True)
     if result.returncode != 0:
-        print(json.dumps({'status': 'error', 'message': result.stderr.strip() or result.stdout.strip()}, ensure_ascii=False, indent=2))
+        print(json.dumps(build_error(result.stderr, result.stdout), ensure_ascii=False, indent=2))
         sys.exit(result.returncode)
 
     lines = [x.strip() for x in result.stdout.splitlines() if x.strip()]
@@ -70,7 +92,16 @@ def main():
         print(json.dumps({'status': 'error', 'message': 'download finished but output file was not detected'}, ensure_ascii=False, indent=2))
         sys.exit(4)
 
-    print(json.dumps({'status': 'ok', 'kind': 'remote_url', 'source': source, 'video_path': str(Path(video_path).resolve())}, ensure_ascii=False, indent=2))
+    payload = {
+        'status': 'ok',
+        'kind': 'remote_url',
+        'source': source,
+        'video_path': str(Path(video_path).resolve()),
+        'info_json': str(info_json.resolve()) if info_json.exists() else None,
+        'cookies_from_browser': args.cookies_from_browser,
+        'cookie_file': str(Path(args.cookie_file).expanduser().resolve()) if args.cookie_file else None,
+    }
+    print(json.dumps(payload, ensure_ascii=False, indent=2))
 
 
 if __name__ == '__main__':

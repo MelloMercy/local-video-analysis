@@ -12,6 +12,8 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 BASE_DIR="${LVA_RUNS_DIR:-$PROJECT_ROOT/runs}"
 PROMPT_FILE="${LVA_PROMPT_FILE:-$PROJECT_ROOT/docs/tech-glossary.txt}"
+COOKIE_FILE="${LVA_COOKIE_FILE:-}"
+COOKIES_FROM_BROWSER="${LVA_COOKIES_FROM_BROWSER:-}"
 mkdir -p "$BASE_DIR"
 
 STEM="$(python3 - <<'PY' "$SOURCE"
@@ -32,7 +34,14 @@ SOURCE_DIR="$OUT_DIR/source"
 mkdir -p "$SOURCE_DIR"
 
 echo "[0/5] resolve source"
-python3 "$SCRIPT_DIR/fetch_video.py" "$SOURCE" --output-dir "$SOURCE_DIR" > "$OUT_DIR/source_result.json"
+CMD=(python3 "$SCRIPT_DIR/fetch_video.py" "$SOURCE" --output-dir "$SOURCE_DIR")
+if [[ -n "$COOKIE_FILE" ]]; then
+  CMD+=(--cookie-file "$COOKIE_FILE")
+fi
+if [[ -n "$COOKIES_FROM_BROWSER" ]]; then
+  CMD+=(--cookies-from-browser "$COOKIES_FROM_BROWSER")
+fi
+"${CMD[@]}" > "$OUT_DIR/source_result.json"
 VIDEO_PATH="$(python3 - <<'PY' "$OUT_DIR/source_result.json"
 import json,sys
 print(json.load(open(sys.argv[1]))['video_path'])
@@ -74,6 +83,7 @@ Done.
 Source input: $SOURCE
 Resolved video: $VIDEO_PATH
 Run directory: $OUT_DIR
+Source metadata: $OUT_DIR/source_result.json
 Probe: $OUT_DIR/probe.json
 Frames: $FRAMES_DIR
 Audio: $AUDIO_PATH

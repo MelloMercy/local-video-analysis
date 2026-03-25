@@ -18,6 +18,12 @@ bash scripts/analyze_video.sh /path/to/video.mp4 30
 bash scripts/analyze_video.sh "https://example.com/video-page" 30
 ```
 
+## 4. 平台页需要登录态时
+
+```bash
+LVA_COOKIES_FROM_BROWSER=chrome bash scripts/analyze_video.sh "https://example.com/video-page" 30
+```
+
 ## 3. 优先查看这些文件
 
 - `runs/<video>/precise/precise_transcript.clean.md`

@@ -153,6 +153,12 @@ Run the full workflow with a video URL:
 bash scripts/analyze_video.sh "https://example.com/video-page" 30
 ```
 
+If the platform page requires login:
+
+```bash
+LVA_COOKIES_FROM_BROWSER=chrome bash scripts/analyze_video.sh "https://example.com/video-page" 30
+```
+
 Run the precise transcript pipeline only:
 
 ```bash
