@@ -1,0 +1,13 @@
+# macOS
+.DS_Store
+
+# Python
+__pycache__/
+*.pyc
+
+# Generated outputs
+runs/
+examples/output/
+
+# Temp
+.tmp/
