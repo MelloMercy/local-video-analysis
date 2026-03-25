@@ -43,6 +43,9 @@ python3 scripts/export_to_obsidian.py --run-dir ./runs/<video-run> --vault-dir /
 - `Local Video Analysis/index.md`（总览页）
 - 或单条结果下的 `Local Video Analysis/<run>/index.md`
 
+更完整说明见：
+- `docs/obsidian-integration.md`
+
 ## 6. 优先查看这些文件
 
 - `runs/<video>/precise/precise_transcript.clean.md`

@@ -140,6 +140,7 @@ python3 scripts/check_env.py
 
 See:
 - `docs/quickstart.md`
+- `docs/obsidian-integration.md`
 
 Primary entrypoint:
 - `scripts/analyze_video.sh`
@@ -247,6 +248,29 @@ Main directions:
 - lightweight human review mode
 - multi-model cross-checking
 - more stable subtitle-grade output
+
+---
+
+## Reporting recommendation
+
+When generating a final report, include source metadata in the header whenever available:
+- input kind (`local_file` / `remote_url`)
+- original source
+- resolved local video path
+- source host
+- source title
+- source id
+- run name
+
+See:
+- `docs/report-template.md`
+
+---
+
+## License
+
+MIT
+re stable subtitle-grade output
 
 ---
 
