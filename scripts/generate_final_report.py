@@ -5,26 +5,13 @@ import re
 from collections import defaultdict
 from pathlib import Path
 
-
 TERM_FIXES = [
-    ('Cloud', 'Claude'),
-    ('Cloud Code', 'Claude Code'),
-    ('Cowork', 'CoWork'),
-    ('computer use', 'Computer Use'),
-    ('Computer use', 'Computer Use'),
-    ('OPS4.6', 'Opus 4.6'),
-    ('OPS 4.6', 'Opus 4.6'),
-    ('OpenCloud', 'OpenClaw'),
-    ('opencloud', 'OpenClaw'),
-    ('国际相机', '国际象棋'),
-    ('相机游戏', '象棋游戏'),
-    ('下相机', '下棋'),
-    ('麦克朗S', 'macOS'),
-    ('雅虎finance', '雅虎 Finance'),
-    ('numbers', 'Numbers'),
-    ('keynote', 'Keynote'),
-    ('pages', 'Pages'),
-    ('dispatch', 'Dispatch'),
+    ('Cloud', 'Claude'), ('Cloud Code', 'Claude Code'), ('Cowork', 'CoWork'),
+    ('computer use', 'Computer Use'), ('Computer use', 'Computer Use'),
+    ('OPS4.6', 'Opus 4.6'), ('OPS 4.6', 'Opus 4.6'), ('OpenCloud', 'OpenClaw'),
+    ('opencloud', 'OpenClaw'), ('国际相机', '国际象棋'), ('相机游戏', '象棋游戏'),
+    ('下相机', '下棋'), ('麦克朗S', 'macOS'), ('雅虎finance', '雅虎 Finance'),
+    ('numbers', 'Numbers'), ('keynote', 'Keynote'), ('pages', 'Pages'), ('dispatch', 'Dispatch'),
 ]
 
 SCENARIO_RULES = [
@@ -61,9 +48,7 @@ def human_duration(seconds):
     h = x // 3600
     m = (x % 3600) // 60
     s = x % 60
-    if h:
-        return f'{h}h {m}m {s}s'
-    return f'{m}m {s}s'
+    return f'{h}h {m}m {s}s' if h else f'{m}m {s}s'
 
 
 def fmt_ts(sec):
@@ -74,6 +59,14 @@ def fmt_ts(sec):
     return f'{h:02d}:{m:02d}:{s:02d}'
 
 
+def fmt_ts_short(sec):
+    x = int(float(sec))
+    h = x // 3600
+    m = (x % 3600) // 60
+    s = x % 60
+    return f'{h:02d}:{m:02d}:{s:02d}' if h else f'{m:02d}:{s:02d}'
+
+
 def summarize_text(text: str, limit=280):
     text = normalize_text(text)
     if len(text) <= limit:
@@ -81,28 +74,10 @@ def summarize_text(text: str, limit=280):
     return text[:limit].rstrip() + '…'
 
 
-def sentence_split(text: str):
-    text = normalize_text(text)
-    return [x.strip() for x in re.split(r'(?<=[。！？.!?])\s+', text) if x.strip()]
-
-
 def extract_probe_fields(probe: dict):
-    duration = (
-        probe.get('duration_seconds')
-        or probe.get('duration')
-        or probe.get('format', {}).get('duration')
-        or probe.get('video', {}).get('duration')
-    )
-    width = (
-        probe.get('width')
-        or probe.get('pixel_width')
-        or probe.get('video', {}).get('width')
-    )
-    height = (
-        probe.get('height')
-        or probe.get('pixel_height')
-        or probe.get('video', {}).get('height')
-    )
+    duration = probe.get('duration_seconds') or probe.get('duration') or probe.get('format', {}).get('duration') or probe.get('video', {}).get('duration')
+    width = probe.get('width') or probe.get('pixel_width') or probe.get('video', {}).get('width')
+    height = probe.get('height') or probe.get('pixel_height') or probe.get('video', {}).get('height')
     if not (width and height):
         for stream in probe.get('streams', []):
             if stream.get('codec_type') == 'video':
@@ -121,15 +96,19 @@ def build_timeline(segments, bucket_seconds=60):
         if t:
             buckets[bucket].append(t)
     out = []
+    prev_summary = ''
     for bucket in sorted(buckets.keys()):
         start = bucket * bucket_seconds
         end = start + bucket_seconds
         merged = ' '.join(buckets[bucket])
-        out.append((fmt_ts(start), fmt_ts(end), summarize_text(merged, 220), merged))
+        excerpt = summarize_text(merged, 180)
+        summary = summarize_text((prev_summary + ' ' + merged).strip(), 90)
+        out.append((fmt_ts(start), fmt_ts(end), summary, excerpt, merged))
+        prev_summary = merged[-160:]
     return out
 
 
-def build_key_points(summary: str, timeline, title: str, max_points=8):
+def build_key_points(text: str, timeline, title: str, max_points=8):
     points = []
     lowered_title = normalize_text(title).lower()
     rules = [
@@ -146,7 +125,7 @@ def build_key_points(summary: str, timeline, title: str, max_points=8):
         ('OpenClaw', '作者多次把 Claude 与 OpenClaw 做直接对比。'),
         ('开箱即用', '作者结论明显偏向强调 Claude 的开箱即用。'),
     ]
-    text_pool = ' '.join([summary] + [line for _, _, line, _ in timeline])
+    text_pool = ' '.join([text] + [raw for _, _, _, _, raw in timeline])
     for needle, point in rules:
         if needle in text_pool or needle.lower() in lowered_title:
             points.append(point)
@@ -156,7 +135,7 @@ def build_key_points(summary: str, timeline, title: str, max_points=8):
 
 
 def detect_scenarios(title: str, timeline):
-    text_pool = normalize_text(title + ' ' + ' '.join(raw for _, _, _, raw in timeline))
+    text_pool = normalize_text(title + ' ' + ' '.join(raw for _, _, _, _, raw in timeline))
     scenarios = []
     for needle, desc in SCENARIO_RULES:
         if needle in text_pool:
@@ -223,7 +202,7 @@ def build_summary(title: str, scenarios, key_points, core_views):
         parts.append(f'视频覆盖了 {len(scenarios)} 个连续实战场景，重点不是单一命令，而是完整演示 Claude 桌面版在文件整理、跨设备派发任务、浏览器操作、文档处理、办公软件联动和桌面游戏操控上的连续执行能力。')
     if core_views and core_views[0] != '待补充':
         parts.append(core_views[0])
-    return summarize_text(' '.join(parts), 520)
+    return ' '.join(parts)
 
 
 def main():
@@ -237,7 +216,6 @@ def main():
     probe = load_json(run_dir / 'probe.json')
     precise = load_json(run_dir / 'precise' / 'precise_transcript.json')
     base_transcript = load_json(run_dir / 'transcript.json')
-
     transcript = precise if precise.get('text') else base_transcript
     text = normalize_text(transcript.get('text', ''))
     segments = transcript.get('segments', [])
@@ -270,37 +248,25 @@ def main():
     parts = ['# 视频分析报告', '', '## 视频概览', '', *overview, '', '## 整段总结', '', summary or '待补充', '', '## 总体结论', '', overall, '', '## 核心观点', '']
     parts += [f'- {x}' for x in core_views]
     parts += ['', '## 实战场景拆解', '']
-    if scenarios:
-        for idx, item in enumerate(scenarios, 1):
-            parts += [f'{idx}. {item}']
-    else:
-        parts += ['- 待补充']
-
+    parts += [f'{idx}. {item}' for idx, item in enumerate(scenarios, 1)] if scenarios else ['- 待补充']
     parts += ['', '## 对比判断', '']
     parts += [f'- {x}' for x in comparison]
-
     parts += ['', '## 时间线', '']
     if timeline:
-        for start, end, line, _ in timeline[:12]:
-            parts += [f'### {start} - {end}', '', line, '']
+        for start, end, minute_summary, excerpt, _ in timeline[:12]:
+            start_label = start[3:] if start.startswith('00:') else start
+            end_label = end[3:] if end.startswith('00:') else end
+            parts += [f'### {start_label} - {end_label}', '', f'- 摘要：{minute_summary}', f'- 原文摘录：{excerpt}', '']
     else:
         parts += ['- 待补充', '']
-
     parts += ['## 重点提取', '']
-    if key_points:
-        parts += [f'- {p}' for p in key_points]
-    else:
-        parts += ['- 待补充']
-
+    parts += [f'- {p}' for p in key_points] if key_points else ['- 待补充']
     parts += ['', '## 风险与保留意见', '']
     parts += [f'- {x}' for x in reservations]
-
-    parts += ['', '## 可执行建议', '', '- 先读 `总体结论`、`核心观点`、`实战场景拆解`，再决定要不要深入时间线。', '- 若要复核是否真覆盖了所有场景，优先结合 `precise/precise_transcript.timeline.md` 与 `frames/` 交叉查看。', '- 若要形成更正式的对外分析稿，建议在当前结构化草案上做人工复核与补充。', '', '## 方法局限', '', '- 当前报告由元信息、自动转写与规则化拼装生成。', '- 该版本适合作为更全面的分析草案，不应直接视为正式字幕级逐字稿或严格评测报告。', '']
-
+    parts += ['', '## 可执行建议', '', '- 先读 `总体结论`、`核心观点`、`实战场景拆解`，再决定要不要深入时间线。', '- 若要复核是否真覆盖了所有场景，优先结合 `03 时间线` 与 `frames/` 交叉查看。', '- 若要形成更正式的对外分析稿，建议在当前结构化草案上做人工复核与补充。', '', '## 方法局限', '', '- 当前报告由元信息、自动转写与规则化拼装生成。', '- 该版本适合作为更全面的分析草案，不应直接视为正式字幕级逐字稿或严格评测报告。', '']
     out = run_dir / args.output
     out.write_text('\n'.join(parts), encoding='utf-8')
     print(str(out))
-
 
 if __name__ == '__main__':
     main()
