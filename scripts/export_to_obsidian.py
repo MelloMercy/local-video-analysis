@@ -157,6 +157,25 @@ def extract_timeline_preview(run_dir: Path, limit=3):
     return previews
 
 
+def describe_frames(run_dir: Path):
+    frames_dir = run_dir / 'frames'
+    if not frames_dir.exists():
+        return '- `frames/` not found in this export.', []
+    image_files = []
+    for ext in ('*.jpg', '*.jpeg', '*.png', '*.webp'):
+        image_files.extend(sorted(frames_dir.glob(ext)))
+    count = len(image_files)
+    preview = [f.name for f in image_files[:6]]
+    desc = f'- `frames/` contains `{count}` extracted frame files.'
+    if preview:
+        desc += f" Example files: `{', '.join(preview)}`"
+    notes = [
+        '- Use `frames/` when transcript wording is ambiguous or when UI / slide / on-screen state matters.',
+        '- Prefer reviewing frames together with `precise_transcript.timeline.md` for higher confidence.',
+    ]
+    return desc, notes
+
+
 def write_main_note(target_root: Path, run_dir: Path, source: dict, probe: dict):
     title = source.get('source_title') or source.get('suggested_run_name') or run_dir.name
     kind = source.get('kind', 'unknown')
@@ -172,12 +191,14 @@ def write_main_note(target_root: Path, run_dir: Path, source: dict, probe: dict)
     summary = extract_summary(run_dir)
     key_points = extract_key_points(run_dir)
     timeline_preview = extract_timeline_preview(run_dir)
+    frames_desc, frame_notes = describe_frames(run_dir)
 
     key_points_md = '\n'.join(key_points)
     if timeline_preview:
         timeline_md = '\n\n'.join([f"### {x['title']}\n\n{x['body']}" for x in timeline_preview])
     else:
         timeline_md = '- 待补充'
+    frame_notes_md = '\n'.join([frames_desc] + frame_notes)
 
     note = f'''---
 title: "{title}"
@@ -205,6 +226,14 @@ tags:
 - Duration: `{human_duration(duration)}`
 - Resolution: `{resolution}`
 
+## Recommended review path
+
+1. Read `[[report.final]]` for the fastest overview.
+2. Read `[[precise_transcript.clean]]` for transcript-first detail.
+3. Read `[[precise_transcript.timeline]]` for chronological reconstruction.
+4. Review `[[suspicious_segments]]` if confidence matters.
+5. Cross-check with `frames/` when visual evidence matters.
+
 ## Summary
 
 {summary}
@@ -216,6 +245,10 @@ tags:
 ## Timeline preview
 
 {timeline_md}
+
+## Visual evidence
+
+{frame_notes_md}
 
 ## Entry points
 

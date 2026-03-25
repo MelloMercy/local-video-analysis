@@ -185,7 +185,7 @@ Typical outputs include:
 - `report.stub.md`
 - `report.final.md`
 - `frames/`
-- Obsidian-ready `index.md` reading homepage with summary, key points, and timeline preview (after export)
+- Obsidian-ready `index.md` reading homepage with summary, key points, timeline preview, and frame review guidance (after export)
 - Vault-level `Local Video Analysis/index.md` overview page with recent analyses, metadata, short summaries, and grouping views (after export)
 - `audio.m4a`
 - `transcript.json`
