@@ -1,6 +1,8 @@
 # local-video-analysis
 
-A local-first, transcript-first workflow for turning videos into precise transcript drafts, frame evidence, and structured summaries.
+A local-first, transcript-first workflow for turning local videos or publicly accessible video URLs into precise transcript drafts, frame evidence, and structured summaries.
+
+> Supports local video files and best-effort URL ingestion for publicly accessible video sources.
 
 `local-video-analysis` 适合把教程、录屏、技术讲解这类视频，整理成一套真正可复核、可继续加工的分析材料，而不是只产出一段漂浮的摘要。
 
@@ -21,6 +23,23 @@ A local-first, transcript-first workflow for turning videos into precise transcr
 - frame + transcript dual evidence
 - tutorial / recording oriented
 - built for iterative precision improvement
+
+## What it can do now
+
+当前已经支持：
+- 分析本地视频文件
+- best-effort 分析公开可访问的视频 URL
+- 统一产出转写、时间线、报告、关键帧和 Obsidian 阅读入口
+- 为后续人工复核、知识沉淀、二次总结提供稳定底座
+
+适合的输入类型：
+- 本地视频文件
+- 公开视频页面 URL
+- 直链媒体 URL
+
+当前最稳定的路径仍然是：
+- 本地视频文件
+- 公开可访问的媒体 URL / 视频页面
 
 ## What you get
 
@@ -56,10 +75,6 @@ A local-first, transcript-first workflow for turning videos into precise transcr
 - 仍建议保留人工复核
 - URL ingestion 是 best-effort，不宣称支持所有视频平台
 
-对外推荐表述：
-
-> Supports local video files and best-effort URL ingestion for publicly accessible video sources.
-
 ## Start here
 
 如果你第一次进仓库，建议按这个顺序看：
@@ -67,8 +82,9 @@ A local-first, transcript-first workflow for turning videos into precise transcr
 1. `docs/install.md`
 2. `docs/quickstart.md`
 3. `docs/workflow.md`
-4. `docs/obsidian-integration.md`
-5. `examples/outputs.md`
+4. `docs/url-inputs.md`
+5. `docs/obsidian-integration.md`
+6. `examples/outputs.md`
 
 ## Quick start
 
@@ -100,6 +116,22 @@ LVA_COOKIES_FROM_BROWSER=chrome bash scripts/analyze_video.sh "https://example.c
 
 ```bash
 python3 scripts/export_to_obsidian.py --run-dir ./runs/<video-run> --vault-dir /path/to/your/ObsidianVault
+```
+
+## Workflow at a glance
+
+```text
+video file / public URL
+        ↓
+source normalization
+        ↓
+audio + probe + frames
+        ↓
+transcript + precise transcript
+        ↓
+report.stub.md + report.final.md
+        ↓
+Obsidian 阅读首页 + 逐字稿 + 时间线 + 可疑片段
 ```
 
 ## Obsidian reading flow
