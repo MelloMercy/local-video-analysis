@@ -73,11 +73,14 @@ python3 "$SCRIPT_DIR/transcribe_audio.py" \
 PRECISE_DIR="$OUT_DIR/precise"
 mkdir -p "$PRECISE_DIR"
 
-echo "[5/5] build precise transcript"
+echo "[5/6] build precise transcript"
 python3 "$SCRIPT_DIR/build_precise_transcript.py" \
   "$AUDIO_PATH" \
   --out-dir "$PRECISE_DIR" \
   --prompt-file "$PROMPT_FILE" > "$OUT_DIR/precise_result.json"
+
+echo "[6/6] generate report stub"
+python3 "$SCRIPT_DIR/generate_report_stub.py" --run-dir "$OUT_DIR" --output report.stub.md > "$OUT_DIR/report_stub_path.txt"
 
 cat <<EOF
 Done.
