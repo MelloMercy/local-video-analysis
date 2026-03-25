@@ -152,6 +152,12 @@ python3 scripts/build_precise_transcript.py /path/to/audio.m4a --out-dir ./runs/
 
 ---
 
+## License
+
+MIT
+
+---
+
 ## 项目与 skill 的关系
 
 推荐做法：
