@@ -21,6 +21,22 @@ A local-first workflow for turning videos into structured, usable knowledge.
 
 ---
 
+## Start here
+
+如果你是第一次进这个仓库，推荐按这个顺序看：
+
+1. `docs/install.md`
+2. `docs/quickstart.md`
+3. `docs/obsidian-integration.md`
+4. `examples/outputs.md`
+
+如果你想先快速理解这个项目值在哪里，优先看：
+- `What makes it useful`
+- `Knowledge workflow`
+- `docs/obsidian-integration.md`
+
+---
+
 ## Why this project
 
 很多视频分析流程有两个常见问题：
