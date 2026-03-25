@@ -19,6 +19,12 @@ def load_json(path: Path):
     return json.loads(path.read_text(encoding='utf-8'))
 
 
+def read_text(path: Path):
+    if not path.exists():
+        return ''
+    return path.read_text(encoding='utf-8')
+
+
 def summarize_text(text: str, limit=140):
     text = ' '.join((text or '').split())
     if len(text) <= limit:
@@ -71,18 +77,84 @@ def extract_summary(run_dir: Path):
             chunk = chunk.split('## 时间线', 1)[0]
             cleaned = clean_markdown_for_summary(chunk)
             if cleaned:
-                return summarize_text(cleaned)
+                return summarize_text(cleaned, 260)
     clean_md = run_dir / 'precise' / 'precise_transcript.clean.md'
     if clean_md.exists():
         cleaned = clean_markdown_for_summary(clean_md.read_text(encoding='utf-8'))
         if cleaned:
-            return summarize_text(cleaned)
+            return summarize_text(cleaned, 260)
     transcript_clean = run_dir / 'transcript.clean.md'
     if transcript_clean.exists():
         cleaned = clean_markdown_for_summary(transcript_clean.read_text(encoding='utf-8'))
         if cleaned:
-            return summarize_text(cleaned)
+            return summarize_text(cleaned, 260)
     return '待补充'
+
+
+def extract_key_points(run_dir: Path, limit=5):
+    final_report = read_text(run_dir / 'report.final.md')
+    if '## 重点提取' in final_report:
+        chunk = final_report.split('## 重点提取', 1)[1]
+        chunk = chunk.split('## 风险与问题', 1)[0]
+        points = []
+        for line in chunk.splitlines():
+            line = line.strip()
+            if line.startswith('- '):
+                points.append(line)
+            if len(points) >= limit:
+                break
+        if points:
+            return points
+
+    cleaned = clean_markdown_for_summary(read_text(run_dir / 'precise' / 'precise_transcript.clean.md'))
+    if cleaned:
+        sentences = re.split(r'(?<=[。！？.!?])\s+|\n+', cleaned)
+        points = []
+        for s in sentences:
+            s = s.strip()
+            if len(s) < 12:
+                continue
+            points.append(f'- {summarize_text(s, 100)}')
+            if len(points) >= limit:
+                break
+        if points:
+            return points
+    return ['- 待补充']
+
+
+def extract_timeline_preview(run_dir: Path, limit=3):
+    final_report = read_text(run_dir / 'report.final.md')
+    if '## 时间线' in final_report:
+        chunk = final_report.split('## 时间线', 1)[1]
+        chunk = chunk.split('## 重点提取', 1)[0]
+        lines = []
+        current = None
+        for raw in chunk.splitlines():
+            line = raw.strip()
+            if line.startswith('### '):
+                if current:
+                    lines.append(current)
+                current = {'title': line[4:].strip(), 'body': ''}
+            elif line and current and not current['body']:
+                current['body'] = summarize_text(line, 120)
+        if current:
+            lines.append(current)
+        if lines:
+            return lines[:limit]
+
+    timeline_md = read_text(run_dir / 'precise' / 'precise_transcript.timeline.md')
+    previews = []
+    current_title = None
+    for raw in timeline_md.splitlines():
+        line = raw.strip()
+        if line.startswith('## ') or line.startswith('### '):
+            current_title = line.lstrip('#').strip()
+        elif line and current_title:
+            previews.append({'title': current_title, 'body': summarize_text(line, 120)})
+            current_title = None
+        if len(previews) >= limit:
+            break
+    return previews
 
 
 def write_main_note(target_root: Path, run_dir: Path, source: dict, probe: dict):
@@ -97,6 +169,15 @@ def write_main_note(target_root: Path, run_dir: Path, source: dict, probe: dict)
     height = probe.get('height') or probe.get('pixel_height') or 'unknown'
     resolution = f'{width} x {height}' if width != 'unknown' and height != 'unknown' else 'unknown'
     today = datetime.now().strftime('%Y-%m-%d')
+    summary = extract_summary(run_dir)
+    key_points = extract_key_points(run_dir)
+    timeline_preview = extract_timeline_preview(run_dir)
+
+    key_points_md = '\n'.join(key_points)
+    if timeline_preview:
+        timeline_md = '\n\n'.join([f"### {x['title']}\n\n{x['body']}" for x in timeline_preview])
+    else:
+        timeline_md = '- 待补充'
 
     note = f'''---
 title: "{title}"
@@ -123,6 +204,18 @@ tags:
 - Run name: `{run_name}`
 - Duration: `{human_duration(duration)}`
 - Resolution: `{resolution}`
+
+## Summary
+
+{summary}
+
+## Key points
+
+{key_points_md}
+
+## Timeline preview
+
+{timeline_md}
 
 ## Entry points
 
