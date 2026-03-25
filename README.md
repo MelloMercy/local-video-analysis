@@ -13,6 +13,8 @@ A local-first, transcript-first workflow for turning local videos or publicly ac
 - **Outputs**: transcript, timeline, frames, report, Obsidian reading entry
 - **Best for**: tutorials, walkthroughs, screen recordings, technical explainers
 
+![Workflow overview](assets/flow-overview.svg)
+
 ## Why this project
 
 很多视频分析流程的问题，不是“不能出摘要”，而是：
@@ -142,6 +144,8 @@ runs/<video-run>/
         ├── probe.json
         └── frames/
 ```
+
+![Obsidian reading flow](assets/obsidian-reading-flow.svg)
 
 当前导出策略已经收敛成：
 - 不再强调 vault 级首页

@@ -1,0 +1,43 @@
+<svg width="1200" height="520" viewBox="0 0 1200 520" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1200" height="520" rx="24" fill="#0F172A"/>
+  <text x="60" y="70" fill="#F8FAFC" font-family="Arial, sans-serif" font-size="34" font-weight="700">Obsidian reading flow</text>
+  <text x="60" y="105" fill="#94A3B8" font-family="Arial, sans-serif" font-size="18">One video run becomes a compact reading space instead of a pile of engineering artifacts.</text>
+
+  <rect x="70" y="150" width="1060" height="300" rx="24" fill="#111827" stroke="#334155"/>
+  <text x="110" y="195" fill="#E2E8F0" font-family="Arial, sans-serif" font-size="28" font-weight="700">Local Video Analysis / &lt;run-name&gt;</text>
+
+  <rect x="110" y="225" width="220" height="170" rx="18" fill="#1E293B"/>
+  <text x="135" y="265" fill="#F8FAFC" font-family="Arial, sans-serif" font-size="24" font-weight="700">阅读首页.md</text>
+  <text x="135" y="305" fill="#CBD5E1" font-family="Arial, sans-serif" font-size="17">• complete summary</text>
+  <text x="135" y="332" fill="#CBD5E1" font-family="Arial, sans-serif" font-size="17">• key points</text>
+  <text x="135" y="359" fill="#CBD5E1" font-family="Arial, sans-serif" font-size="17">• timeline preview</text>
+
+  <rect x="370" y="225" width="210" height="70" rx="16" fill="#0B1220" stroke="#334155"/>
+  <text x="395" y="268" fill="#E2E8F0" font-family="Arial, sans-serif" font-size="22" font-weight="700">01 视频分析报告.md</text>
+
+  <rect x="370" y="315" width="210" height="70" rx="16" fill="#0B1220" stroke="#334155"/>
+  <text x="395" y="358" fill="#E2E8F0" font-family="Arial, sans-serif" font-size="22" font-weight="700">02 高精度逐字稿.md</text>
+
+  <rect x="620" y="225" width="180" height="70" rx="16" fill="#0B1220" stroke="#334155"/>
+  <text x="648" y="268" fill="#E2E8F0" font-family="Arial, sans-serif" font-size="22" font-weight="700">03 时间线.md</text>
+
+  <rect x="620" y="315" width="180" height="70" rx="16" fill="#0B1220" stroke="#334155"/>
+  <text x="648" y="358" fill="#E2E8F0" font-family="Arial, sans-serif" font-size="22" font-weight="700">04 可疑片段.md</text>
+
+  <rect x="840" y="225" width="240" height="160" rx="18" fill="#1E293B"/>
+  <text x="875" y="265" fill="#F8FAFC" font-family="Arial, sans-serif" font-size="24" font-weight="700">Evidence layer</text>
+  <text x="875" y="305" fill="#CBD5E1" font-family="Arial, sans-serif" font-size="17">• frames/</text>
+  <text x="875" y="332" fill="#CBD5E1" font-family="Arial, sans-serif" font-size="17">• source_result.json</text>
+  <text x="875" y="359" fill="#CBD5E1" font-family="Arial, sans-serif" font-size="17">• probe.json</text>
+
+  <path d="M330 310H370" stroke="#38BDF8" stroke-width="5" stroke-linecap="round"/>
+  <path d="M580 260H620" stroke="#38BDF8" stroke-width="5" stroke-linecap="round"/>
+  <path d="M580 350H620" stroke="#38BDF8" stroke-width="5" stroke-linecap="round"/>
+  <path d="M800 305H840" stroke="#38BDF8" stroke-width="5" stroke-linecap="round"/>
+
+  <text x="70" y="480" fill="#38BDF8" font-family="Arial, sans-serif" font-size="18" font-weight="700">Reading-first export</text>
+  <text x="235" y="480" fill="#94A3B8" font-family="Arial, sans-serif" font-size="18">•</text>
+  <text x="260" y="480" fill="#38BDF8" font-family="Arial, sans-serif" font-size="18" font-weight="700">single-run entry page</text>
+  <text x="438" y="480" fill="#94A3B8" font-family="Arial, sans-serif" font-size="18">•</text>
+  <text x="463" y="480" fill="#38BDF8" font-family="Arial, sans-serif" font-size="18" font-weight="700">evidence kept close to reading flow</text>
+</svg>
