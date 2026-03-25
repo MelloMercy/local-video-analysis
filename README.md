@@ -4,7 +4,14 @@ A local-first, transcript-first workflow for turning local videos or publicly ac
 
 > Supports local video files and best-effort URL ingestion for publicly accessible video sources.
 
-`local-video-analysis` 适合把教程、录屏、技术讲解这类视频，整理成一套真正可复核、可继续加工的分析材料，而不是只产出一段漂浮的摘要。
+`local-video-analysis` 不是一个“吐一段摘要就结束”的视频工具。它的目标是把教程、录屏、技术讲解这类视频，整理成一套 **可复核、可继续加工、可沉淀进知识库** 的分析材料。
+
+## At a glance
+
+- **Input**: local video file / public video URL
+- **Core idea**: transcript first, then summary with frame evidence
+- **Outputs**: transcript, timeline, frames, report, Obsidian reading entry
+- **Best for**: tutorials, walkthroughs, screen recordings, technical explainers
 
 ## Why this project
 
@@ -25,6 +32,26 @@ A local-first, transcript-first workflow for turning local videos or publicly ac
 - tutorial / recording oriented
 - built for iterative precision improvement
 
+## Why it is not just another video summarizer
+
+它不是“看几帧然后输出一段总结”的轻量摘要器，而是把视频拆成多层可复核结果：
+
+| Layer | What it preserves | Why it matters |
+|---|---|---|
+| Transcript | 原话基础 | 方便回查、纠错、提取术语 |
+| Timeline | 时间结构 | 方便定位步骤、还原流程 |
+| Frames | 画面证据 | 方便核对 UI、配置、操作状态 |
+| Report | 结构化结论 | 方便快速理解视频主线 |
+| Obsidian reading flow | 阅读入口 | 方便沉淀成长期可用知识 |
+
+如果你的目标是：
+- 复盘教程
+- 提取配置步骤
+- 回看录屏里的关键操作
+- 把视频变成可继续整理的知识材料
+
+这条路线会比“只要一段摘要”更有用。
+
 ## What it can do now
 
 当前已经支持：
@@ -42,46 +69,15 @@ A local-first, transcript-first workflow for turning local videos or publicly ac
 - 本地视频文件
 - 公开可访问的媒体 URL / 视频页面
 
-## Why it is not just another video summarizer
-
-它不是“看几帧然后输出一段总结”的轻量摘要器，而是把视频拆成多层可复核结果：
-
-- transcript：保留原话基础
-- timeline：保留时间结构
-- frames：保留画面证据
-- report：把内容整理成结构化结论
-- Obsidian reading flow：把结果变成可读、可沉淀的入口
-
-如果你的目标是：
-- 复盘教程
-- 提取配置步骤
-- 回看录屏里的关键操作
-- 把视频变成可继续整理的知识材料
-
-这条路线会比“只要一段摘要”更有用。
-
 ## Typical use cases
 
 这个项目尤其适合：
-- 教程视频复盘
-- 配置演示拆解
-- 本地开发录屏归档
-- 产品操作流程梳理
-- 技术讲解内容整理
 
-## What you get
-
-运行一次分析后，通常会得到这些层次化结果：
-
-- `source_result.json`：输入来源与解析结果
-- `probe.json`：时长、分辨率等视频元信息
-- `frames/`：关键帧证据
-- `audio.m4a`：导出的音频
-- `transcript.clean.md` / `transcript.timeline.md`：基础转写与时间线
-- `precise/precise_transcript.clean.md` / `precise/precise_transcript.timeline.md`：高精度逐字稿草案
-- `precise/suspicious_segments.md`：可疑片段复核清单
-- `report.stub.md` / `report.final.md`：结构化报告草稿与正式报告
-- `阅读首页.md`：导出到 Obsidian 后的单条阅读入口
+- **教程视频复盘**：把长视频拆成逐字稿、时间线和重点结论
+- **配置演示拆解**：保留每一步讲解和画面证据，方便回查
+- **本地开发录屏归档**：把录屏沉淀成可以继续整理的资料
+- **产品操作流程梳理**：既保留结果，也保留过程和证据
+- **技术讲解内容整理**：方便后续写笔记、文档、报告或知识卡片
 
 ## Workflow at a glance
 
@@ -99,7 +95,9 @@ report.stub.md + report.final.md
 Obsidian 阅读首页 + 逐字稿 + 时间线 + 可疑片段
 ```
 
-## Quick output preview
+## What you get
+
+运行一次分析后，通常会得到这些层次化结果：
 
 ```text
 runs/<video-run>/
@@ -117,6 +115,18 @@ runs/<video-run>/
     └── suspicious_segments.md
 ```
 
+关键产物包括：
+- `source_result.json`：输入来源与解析结果
+- `probe.json`：时长、分辨率等视频元信息
+- `frames/`：关键帧证据
+- `audio.m4a`：导出的音频
+- `transcript.clean.md` / `transcript.timeline.md`：基础转写与时间线
+- `precise/precise_transcript.clean.md` / `precise/precise_transcript.timeline.md`：高精度逐字稿草案
+- `precise/suspicious_segments.md`：可疑片段复核清单
+- `report.stub.md` / `report.final.md`：结构化报告草稿与正式报告
+
+## Reading experience after export
+
 导出到 Obsidian 后，会变成更适合阅读的结构：
 
 ```text
@@ -132,6 +142,14 @@ runs/<video-run>/
         ├── probe.json
         └── frames/
 ```
+
+当前导出策略已经收敛成：
+- 不再强调 vault 级首页
+- 每条视频目录里的 `阅读首页.md` 是真正入口
+- `阅读首页.md` 默认排在 `01 视频分析报告.md` 前面
+- `01 视频分析报告.md`、`02 高精度逐字稿.md`、`03 时间线.md`、`04 可疑片段.md` 作为正式阅读链路
+
+这让 Obsidian 更像阅读空间，而不是工程产物目录。
 
 ## Capability boundary
 
@@ -195,17 +213,6 @@ LVA_COOKIES_FROM_BROWSER=chrome bash scripts/analyze_video.sh "https://example.c
 ```bash
 python3 scripts/export_to_obsidian.py --run-dir ./runs/<video-run> --vault-dir /path/to/your/ObsidianVault
 ```
-
-## Obsidian reading flow
-
-当前导出策略已经收敛成：
-
-- 不再强调 vault 级首页
-- 每条视频目录里的 `阅读首页.md` 是真正入口
-- `阅读首页.md` 默认排在 `01 视频分析报告.md` 前面
-- `01 视频分析报告.md`、`02 高精度逐字稿.md`、`03 时间线.md`、`04 可疑片段.md` 作为正式阅读链路
-
-这让 Obsidian 更像阅读空间，而不是工程产物目录。
 
 ## Docs map
 
