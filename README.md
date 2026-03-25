@@ -244,6 +244,22 @@ Main directions:
 
 ---
 
+## Reporting recommendation
+
+When generating a final report, include source metadata in the header whenever available:
+- input kind (`local_file` / `remote_url`)
+- original source
+- resolved local video path
+- source host
+- source title
+- source id
+- run name
+
+See:
+- `docs/report-template.md`
+
+---
+
 ## License
 
 MIT
