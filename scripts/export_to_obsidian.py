@@ -3,6 +3,7 @@ import argparse
 import json
 import re
 import shutil
+from collections import defaultdict
 from datetime import datetime
 from pathlib import Path
 
@@ -158,24 +159,49 @@ def load_index_entries(index_path: Path):
         return []
 
 
+def render_entry_block(e):
+    return [
+        f"### [[{e['entry_name']}/index|{e['title']}]]",
+        '',
+        f"- Date: `{e['date']}`",
+        f"- Source host: `{e['host']}`",
+        f"- Source kind: `{e['kind']}`",
+        f"- Duration: `{e['duration']}`",
+        f"- Run name: `{e['run_name']}`",
+        '',
+        e['summary'],
+        '',
+    ]
+
+
+def render_group_section(title, grouped):
+    lines = [f'## {title}', '']
+    if not grouped:
+        return lines + ['- None yet.', '']
+    for key in sorted(grouped.keys()):
+        lines += [f'### {key}', '']
+        for e in grouped[key]:
+            lines += [f"- [[{e['entry_name']}/index|{e['title']}]] · `{e['date']}` · `{e['duration']}`"]
+        lines += ['']
+    return lines
+
+
 def render_vault_index(entries):
     lines = ['# Local Video Analysis', '', '## Recent analyses', '']
     if not entries:
         lines += ['- No analyses yet.', '']
     else:
         for e in entries:
-            lines += [
-                f"### [[{e['entry_name']}/index|{e['title']}]]",
-                '',
-                f"- Date: `{e['date']}`",
-                f"- Source host: `{e['host']}`",
-                f"- Source kind: `{e['kind']}`",
-                f"- Duration: `{e['duration']}`",
-                f"- Run name: `{e['run_name']}`",
-                '',
-                e['summary'],
-                '',
-            ]
+            lines += render_entry_block(e)
+
+    by_host = defaultdict(list)
+    by_kind = defaultdict(list)
+    for e in entries:
+        by_host[e.get('host') or 'unknown'].append(e)
+        by_kind[e.get('kind') or 'unknown'].append(e)
+
+    lines += render_group_section('By source host', by_host)
+    lines += render_group_section('By source kind', by_kind)
     lines += ['<!-- INDEX_ENTRIES_START -->', json.dumps(entries, ensure_ascii=False, indent=2), '<!-- INDEX_ENTRIES_END -->', '']
     return '\n'.join(lines)
 

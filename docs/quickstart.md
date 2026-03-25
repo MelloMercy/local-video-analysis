@@ -40,7 +40,7 @@ python3 scripts/export_to_obsidian.py --run-dir ./runs/<video-run> --vault-dir /
 
 导出后优先打开：
 
-- `Local Video Analysis/index.md`
+- `Local Video Analysis/index.md`（总览页）
 - 或单条结果下的 `Local Video Analysis/<run>/index.md`
 
 ## 6. 优先查看这些文件
