@@ -145,6 +145,10 @@ runs/<video-run>/
         └── frames/
 ```
 
+### Real sample preview
+
+![Obsidian export showcase](assets/obsidian-showcase.jpg)
+
 ![Obsidian reading flow](assets/obsidian-reading-flow.svg)
 
 当前导出策略已经收敛成：
