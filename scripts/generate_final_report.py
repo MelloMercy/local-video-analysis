@@ -150,6 +150,32 @@ def build_key_points(summary: str, timeline, title: str, max_points=6):
     return points[:max_points]
 
 
+def build_summary(title: str, points, summary_text: str):
+    title = normalize_text(title)
+    title_brief = re.sub(r'^[🚀✨🔥💥⭐️🌟]+', '', title).strip(' ：:')
+    lines = []
+    if title_brief and title_brief != 'unknown':
+        lines.append(f'这段视频主要围绕《{title_brief}》展开。')
+    if points:
+        first = points[0].lstrip('- ').rstrip('。')
+        second = points[1].lstrip('- ').rstrip('。') if len(points) > 1 else ''
+        lines.append(f'核心内容是：{first}；{second or "并通过多个连续案例展示实际效果。"}')
+    sentences = sentence_split(summary_text)
+    extra = []
+    for s in sentences:
+        if len(s) < 24:
+            continue
+        if any(keyword in s for keyword in ['点赞', '关注', '谢谢大家观看']):
+            continue
+        extra.append(summarize_text(s, 120).rstrip('。'))
+        if len(extra) >= 2:
+            break
+    if extra:
+        lines.append('从自动转写结果看，' + '；'.join(extra) + '。')
+    merged = ' '.join(lines).strip()
+    return summarize_text(merged, 420)
+
+
 def main():
     p = argparse.ArgumentParser()
     p.add_argument('--run-dir', required=True)
@@ -184,8 +210,9 @@ def main():
     ]
 
     timeline = build_timeline(segments)
-    summary = summarize_text(text, 800)
-    points = build_key_points(summary, timeline, title)
+    raw_summary = summarize_text(text, 900)
+    points = build_key_points(raw_summary, timeline, title)
+    summary = build_summary(title, points, raw_summary)
 
     parts = ['# 视频分析报告', '', '## 视频概览', '', *overview, '', '## 整段总结', '', summary or '待补充', '', '## 时间线', '']
     if timeline:
