@@ -100,4 +100,6 @@ Transcript timeline md: $OUT_DIR/transcript.timeline.md
 Precise transcript clean md: $PRECISE_DIR/precise_transcript.clean.md
 Precise transcript timeline md: $PRECISE_DIR/precise_transcript.timeline.md
 Precise suspicious review: $PRECISE_DIR/suspicious_segments.md
+Report stub: $OUT_DIR/report.stub.md
+Final report draft: $OUT_DIR/report.final.md
 EOF
