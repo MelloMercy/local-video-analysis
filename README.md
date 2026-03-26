@@ -6,12 +6,17 @@ A local-first, transcript-first workflow for turning local videos or publicly ac
 
 `local-video-analysis` 不是一个“吐一段摘要就结束”的视频工具。它的目标是把教程、录屏、技术讲解这类视频，整理成一套 **可复核、可继续加工、可沉淀进知识库** 的分析材料。
 
+如果只用一句话概括它：
+
+> 它更像一条把视频变成“可继续工作的材料包”的流程，而不是一个一次性视频摘要器。
+
 ## At a glance
 
 - **Input**: local video file / public video URL
 - **Core idea**: transcript first, then summary with frame evidence
 - **Outputs**: transcript, timeline, frames, report, Obsidian reading entry
 - **Best for**: tutorials, walkthroughs, screen recordings, technical explainers
+- **Best used when**: you need evidence, traceability, and reusable notes — not just a quick summary
 
 ![Workflow overview](assets/flow-overview.svg)
 
@@ -22,6 +27,8 @@ A local-first, transcript-first workflow for turning local videos or publicly ac
 1. 太依赖云端服务
 2. 只有结论，没有可追溯的逐字稿基础
 3. 很难把视频内容沉淀成可复查、可继续加工的知识
+
+换句话说，很多工具更擅长“快速给你一个结果”，但不擅长“给你一套还能继续工作的材料”。
 
 这个项目的核心思路是：
 
@@ -36,7 +43,15 @@ A local-first, transcript-first workflow for turning local videos or publicly ac
 
 ## Why it is not just another video summarizer
 
-它不是“看几帧然后输出一段总结”的轻量摘要器，而是把视频拆成多层可复核结果：
+它不是“看几帧然后输出一段总结”的轻量摘要器，而是更偏向一个**视频→材料包**的整理流程。
+
+也就是说，它关心的不只是“最后一句结论”，还关心：
+- 原话是否能回查
+- 步骤是否能定位
+- 画面是否有证据
+- 输出是否还能继续沉淀进文档系统
+
+所以它会把视频拆成多层可复核结果：
 
 | Layer | What it preserves | Why it matters |
 |---|---|---|
@@ -71,6 +86,22 @@ A local-first, transcript-first workflow for turning local videos or publicly ac
 - 本地视频文件
 - 公开可访问的媒体 URL / 视频页面
 
+## Who this is for
+
+如果你属于下面这类用户，这个项目通常会比普通视频总结工具更有价值：
+
+- 想把教程 / 录屏整理成**可回查资料**的人
+- 想保留原话、时间线、关键画面，而不是只要一段结论的人
+- 想把视频内容沉淀进 Obsidian、文档库或长期知识系统的人
+- 能接受“先拿到高质量草案，再人工精修最后一段”的人
+
+如果你的目标只是：
+- 快速看个大意
+- 不关心过程证据
+- 不打算继续加工输出
+
+那你可能不需要这条更重、更完整的工作流。
+
 ## Typical use cases
 
 这个项目尤其适合：
@@ -84,6 +115,8 @@ A local-first, transcript-first workflow for turning local videos or publicly ac
 ## Real-world validated example
 
 这个项目不只是“理论上可用”。当前仓库已经用一个真实公开视频样本完成过端到端验证：
+
+如果你是第一次看到这个仓库，这一节其实很重要：它说明这不是纯概念 README，而是已经有真实结果可看的工作流。
 
 - 来源：公开可访问的 Bilibili 页面
 - 运行方式：`bash scripts/analyze_video.sh '<url>' 30`
@@ -211,12 +244,18 @@ runs/<video-run>/
 
 如果你第一次进仓库，建议按这个顺序看：
 
-1. `docs/install.md`
-2. `docs/quickstart.md`
-3. `docs/workflow.md`
-4. `docs/url-inputs.md`
-5. `docs/obsidian-integration.md`
-6. `examples/outputs.md`
+1. `docs/quickstart.md` — 先判断值不值得继续试
+2. `docs/install.md` — 再补环境
+3. `docs/workflow.md` — 理解完整处理链路
+4. `docs/url-inputs.md` — 看 URL 输入边界
+5. `docs/obsidian-integration.md` — 看导出后的阅读体验
+6. `examples/outputs.md` — 看输出结构示例
+
+如果你只想最快理解这个项目，建议直接走这条最短路径：
+
+1. 先看 README 里的真实样本说明
+2. 再看 `docs/quickstart.md`
+3. 最后决定要不要真的跑一次
 
 ## Quick start
 
@@ -225,6 +264,12 @@ runs/<video-run>/
 
 兼容入口：
 - `scripts/analyze_local_video.sh`（wrapper，保留兼容，不再作为主推荐）
+
+如果你只打算试一次，最推荐的顺序是：
+
+1. 先用一个本地视频文件跑
+2. 看 `report.final.md` 和 `precise/`
+3. 觉得结果对味，再试 URL 输入和 Obsidian 导出
 
 分析本地视频：
 
