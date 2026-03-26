@@ -310,6 +310,7 @@ python3 scripts/export_to_obsidian.py --run-dir ./runs/<video-run> --vault-dir /
 - `docs/roadmap.md` — 后续能力规划
 - `docs/project-skill-sync.md` — GitHub 项目与 OpenClaw skill 同步说明
 - `docs/promo-copy.md` — 对外介绍 / 发群 / 发帖可复用文案
+- `docs/changelog.md` — 重要更新与阶段性变化记录
 - `examples/outputs.md` — 输出结构示例
 
 ## Deployment / usage modes
