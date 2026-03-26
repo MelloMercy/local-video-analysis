@@ -20,6 +20,27 @@ A local-first, transcript-first workflow for turning local videos or publicly ac
 
 ![Workflow overview](assets/flow-overview.svg)
 
+## Try this first
+
+如果你是第一次看到这个仓库，最推荐先看真实样本，而不是先装环境。
+
+当前仓库已经保留了一个真实跑通过的端到端样本：
+
+```text
+runs/claude新功能降维打击openclaw-桌面版cowork-code支持computer-use功能-6大实战场景全-bv1i6qbbcew2
+```
+
+建议先看：
+- `report.final.md`
+- `precise/precise_transcript.clean.md`
+- `precise/precise_transcript.timeline.md`
+- `precise/suspicious_segments.md`
+
+这个样本已经验证过：
+- 来源：公开可访问的 Bilibili 页面
+- 运行方式：`bash scripts/analyze_video.sh '<url>' 30`
+- 结论：在**不承诺全平台稳定**的前提下，best-effort URL ingestion 至少已在一个真实 Bilibili 页面上跑通
+
 ## Why this project
 
 很多视频分析流程的问题，不是“不能出摘要”，而是：
@@ -102,27 +123,6 @@ A local-first, transcript-first workflow for turning local videos or publicly ac
 - **本地开发录屏归档**：把录屏沉淀成可以继续整理的资料
 - **产品操作流程梳理**：既保留结果，也保留过程和证据
 - **技术讲解内容整理**：方便后续写笔记、文档、报告或知识卡片
-
-## Try this first
-
-如果你是第一次看到这个仓库，最推荐先看真实样本，而不是先装环境。
-
-当前仓库已经保留了一个真实跑通过的端到端样本：
-
-```text
-runs/claude新功能降维打击openclaw-桌面版cowork-code支持computer-use功能-6大实战场景全-bv1i6qbbcew2
-```
-
-建议先看：
-- `report.final.md`
-- `precise/precise_transcript.clean.md`
-- `precise/precise_transcript.timeline.md`
-- `precise/suspicious_segments.md`
-
-这个样本已经验证过：
-- 来源：公开可访问的 Bilibili 页面
-- 运行方式：`bash scripts/analyze_video.sh '<url>' 30`
-- 结论：在**不承诺全平台稳定**的前提下，best-effort URL ingestion 至少已在一个真实 Bilibili 页面上跑通
 
 ## Workflow at a glance
 
@@ -254,8 +254,8 @@ python3 scripts/check_env.py
 如果你第一次进仓库，建议按这个顺序看：
 
 1. `Try this first` 这一节 — 先判断值不值得继续试
-2. `docs/quickstart.md` — 看最快跑通路径
-3. `docs/install.md` — 再补环境
+2. `docs/install.md` — 确认环境能不能跑
+3. `docs/quickstart.md` — 看最快跑通路径
 4. `docs/workflow.md` — 理解完整处理链路
 5. `docs/url-inputs.md` — 看 URL 输入边界
 6. `docs/obsidian-integration.md` — 看导出后的阅读体验
@@ -271,9 +271,10 @@ python3 scripts/check_env.py
 
 如果你只打算试一次，最推荐的顺序是：
 
-1. 先用一个本地视频文件跑
-2. 看 `report.final.md` 和 `precise/`
-3. 觉得结果对味，再试 URL 输入和 Obsidian 导出
+1. 先确认环境通过 `python3 scripts/check_env.py`
+2. 再用一个本地视频文件跑
+3. 先看 `report.final.md` 和 `precise/`
+4. 觉得结果对味，再试 URL 输入和 Obsidian 导出
 
 分析本地视频：
 
