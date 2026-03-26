@@ -81,6 +81,26 @@ A local-first, transcript-first workflow for turning local videos or publicly ac
 - **产品操作流程梳理**：既保留结果，也保留过程和证据
 - **技术讲解内容整理**：方便后续写笔记、文档、报告或知识卡片
 
+## Real-world validated example
+
+这个项目不只是“理论上可用”。当前仓库已经用一个真实公开视频样本完成过端到端验证：
+
+- 来源：公开可访问的 Bilibili 页面
+- 运行方式：`bash scripts/analyze_video.sh '<url>' 30`
+- 结论：在**不承诺全平台稳定**的前提下，best-effort URL ingestion 至少已在一个真实 Bilibili 页面上跑通
+
+当前保留的真实回归样本目录：
+
+```text
+runs/claude新功能降维打击openclaw-桌面版cowork-code支持computer-use功能-6大实战场景全-bv1i6qbbcew2
+```
+
+这个样本可以直接用于检查：
+- 报告结构是否清晰
+- 逐字稿修正是否有效
+- 时间线是否可读
+- 抽帧与阅读入口是否足够支撑复核
+
 ## Workflow at a glance
 
 ```text
@@ -178,6 +198,14 @@ runs/<video-run>/
 - 更像“高质量自动草案”，不是正式发布级字幕
 - 仍建议保留人工复核
 - URL ingestion 是 best-effort，不宣称支持所有视频平台
+
+如果你想快速判断它适不适合你的任务，可以用这三个问题筛一下：
+
+1. 你是否更需要**可复核材料**，而不只是“一段摘要”？
+2. 你的内容是否以**讲解 / 操作 / 演示 / 录屏**为主？
+3. 你是否接受先得到**高质量草案**，再人工补最后一段精修？
+
+如果这三个问题里有两个以上回答是“是”，这个项目通常就比较适合你。
 
 ## Start here
 
