@@ -311,6 +311,39 @@ python3 scripts/export_to_obsidian.py --run-dir ./runs/<video-run> --vault-dir /
 - `docs/project-skill-sync.md` — GitHub 项目与 OpenClaw skill 同步说明
 - `examples/outputs.md` — 输出结构示例
 
+## Deployment / usage modes
+
+这个能力建议按两种模式理解：
+
+### 1. As a project
+
+适合场景：
+- 你要自己直接跑脚本
+- 你要改代码、加能力、做 GitHub 协作
+- 你要把它当作长期维护的主仓库
+
+典型使用方式：
+
+```bash
+bash scripts/analyze_video.sh /path/to/video.mp4 30
+python3 scripts/export_to_obsidian.py --run-dir ./runs/<video-run> --vault-dir /path/to/your/ObsidianVault
+```
+
+可以把它理解为：
+- **Project = source of truth**
+- 负责开发、测试、文档、版本演进
+
+### 2. As an OpenClaw skill
+
+适合场景：
+- 你希望在 OpenClaw 里直接调用这套能力
+- 你希望把它变成 agent 可以复用的工作流入口
+- 你不想每次都手动记脚本和参数
+
+可以把它理解为：
+- **Skill = runtime entrypoint**
+- 负责在 OpenClaw 里被直接使用
+
 ## Project + Skill
 
 推荐双轨并存：
@@ -321,6 +354,22 @@ python3 scripts/export_to_obsidian.py --run-dir ./runs/<video-run> --vault-dir /
 实践上就是：
 
 > 先在 project 里迭代稳定能力，再同步回 skill。
+
+## Recommended deployment flow
+
+最推荐的部署 / 使用方式是：
+
+1. 先把项目仓库 clone 到本地
+2. 按 `docs/install.md` 补齐运行环境
+3. 先用 **project 模式** 跑通一次
+4. 确认输出风格、目录结构、Obsidian 导出都符合预期
+5. 再把稳定能力同步成 **OpenClaw skill**
+
+也就是说：
+
+- **第一次接触**：优先 project
+- **稳定复用**：再上 skill
+- **后续迭代**：仍然以 project 为主，skill 跟随同步
 
 ## Roadmap
 
