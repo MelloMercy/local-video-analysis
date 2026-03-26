@@ -77,30 +77,21 @@ A local-first, transcript-first workflow for turning local videos or publicly ac
 - 统一产出转写、时间线、报告、关键帧和 Obsidian 阅读入口
 - 为后续人工复核、知识沉淀、二次总结提供稳定底座
 
-适合的输入类型：
-- 本地视频文件
-- 公开视频页面 URL
-- 直链媒体 URL
-
-当前最稳定的路径仍然是：
-- 本地视频文件
-- 公开可访问的媒体 URL / 视频页面
+输入侧可以简单记成三类：
+- **最稳**：本地视频文件
+- **次稳**：直链媒体 URL
+- **可尝试**：公开可访问的视频页面 URL
 
 ## Who this is for
 
-如果你属于下面这类用户，这个项目通常会比普通视频总结工具更有价值：
+这条工作流更适合你，如果你：
 
-- 想把教程 / 录屏整理成**可回查资料**的人
-- 想保留原话、时间线、关键画面，而不是只要一段结论的人
-- 想把视频内容沉淀进 Obsidian、文档库或长期知识系统的人
-- 能接受“先拿到高质量草案，再人工精修最后一段”的人
+- 想把教程 / 录屏整理成**可回查资料**
+- 想保留原话、时间线、关键画面
+- 想把结果沉淀进 Obsidian、文档库或长期知识系统
+- 接受先拿到高质量草案，再人工精修最后一段
 
-如果你的目标只是：
-- 快速看个大意
-- 不关心过程证据
-- 不打算继续加工输出
-
-那你可能不需要这条更重、更完整的工作流。
+如果你只是想快速看个大意，不关心过程证据，也不打算继续加工输出，那你大概率不需要它。
 
 ## Typical use cases
 
@@ -112,27 +103,26 @@ A local-first, transcript-first workflow for turning local videos or publicly ac
 - **产品操作流程梳理**：既保留结果，也保留过程和证据
 - **技术讲解内容整理**：方便后续写笔记、文档、报告或知识卡片
 
-## Real-world validated example
+## Try this first
 
-这个项目不只是“理论上可用”。当前仓库已经用一个真实公开视频样本完成过端到端验证：
+如果你是第一次看到这个仓库，最推荐先看真实样本，而不是先装环境。
 
-如果你是第一次看到这个仓库，这一节其实很重要：它说明这不是纯概念 README，而是已经有真实结果可看的工作流。
-
-- 来源：公开可访问的 Bilibili 页面
-- 运行方式：`bash scripts/analyze_video.sh '<url>' 30`
-- 结论：在**不承诺全平台稳定**的前提下，best-effort URL ingestion 至少已在一个真实 Bilibili 页面上跑通
-
-当前保留的真实回归样本目录：
+当前仓库已经保留了一个真实跑通过的端到端样本：
 
 ```text
 runs/claude新功能降维打击openclaw-桌面版cowork-code支持computer-use功能-6大实战场景全-bv1i6qbbcew2
 ```
 
-这个样本可以直接用于检查：
-- 报告结构是否清晰
-- 逐字稿修正是否有效
-- 时间线是否可读
-- 抽帧与阅读入口是否足够支撑复核
+建议先看：
+- `report.final.md`
+- `precise/precise_transcript.clean.md`
+- `precise/precise_transcript.timeline.md`
+- `precise/suspicious_segments.md`
+
+这个样本已经验证过：
+- 来源：公开可访问的 Bilibili 页面
+- 运行方式：`bash scripts/analyze_video.sh '<url>' 30`
+- 结论：在**不承诺全平台稳定**的前提下，best-effort URL ingestion 至少已在一个真实 Bilibili 页面上跑通
 
 ## Workflow at a glance
 
@@ -240,22 +230,36 @@ runs/<video-run>/
 
 如果这三个问题里有两个以上回答是“是”，这个项目通常就比较适合你。
 
+## Runtime requirements
+
+当前主流程默认面向 **macOS 本地环境**，运行前至少需要：
+
+- Python 3.9+
+- `ffmpeg`
+- `ffprobe`
+- `swift`
+- `mlx-whisper`
+
+最小检查命令：
+
+```bash
+python3 scripts/check_env.py
+```
+
+如果你还没装环境，先看：
+- `docs/install.md`
+
 ## Start here
 
 如果你第一次进仓库，建议按这个顺序看：
 
-1. `docs/quickstart.md` — 先判断值不值得继续试
-2. `docs/install.md` — 再补环境
-3. `docs/workflow.md` — 理解完整处理链路
-4. `docs/url-inputs.md` — 看 URL 输入边界
-5. `docs/obsidian-integration.md` — 看导出后的阅读体验
-6. `examples/outputs.md` — 看输出结构示例
-
-如果你只想最快理解这个项目，建议直接走这条最短路径：
-
-1. 先看 README 里的真实样本说明
-2. 再看 `docs/quickstart.md`
-3. 最后决定要不要真的跑一次
+1. `Try this first` 这一节 — 先判断值不值得继续试
+2. `docs/quickstart.md` — 看最快跑通路径
+3. `docs/install.md` — 再补环境
+4. `docs/workflow.md` — 理解完整处理链路
+5. `docs/url-inputs.md` — 看 URL 输入边界
+6. `docs/obsidian-integration.md` — 看导出后的阅读体验
+7. `examples/outputs.md` — 看输出结构示例
 
 ## Quick start
 
